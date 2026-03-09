@@ -191,23 +191,40 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 /* ===== MOBILE ===== */
 .back-btn { display:none; }
 @media (max-width: 700px) {
-  body { overflow:hidden; }
-  .layout { position:relative; }
-  .sidebar { width:100vw; min-width:unset; position:fixed; top:0; left:0; bottom:0; z-index:10; transition:transform 0.25s ease; }
-  .sidebar.hidden { transform:translateX(-100vw); }
-  .main { width:100vw; }
-  #chatView { position:fixed; top:0; left:0; right:0; bottom:0; z-index:20; background:var(--bg); }
+  .layout { position:relative; width:100vw; overflow:hidden; }
+  .sidebar {
+    width:100vw; min-width:100vw;
+    position:absolute; top:0; left:0; bottom:0;
+    z-index:10;
+    transition:transform 0.3s ease;
+  }
+  .sidebar.hidden {
+    transform:translateX(-100vw);
+    pointer-events:none;
+  }
+  .main {
+    width:100vw;
+    position:absolute; top:0; left:0; right:0; bottom:0;
+  }
+  #chatView {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    z-index:20;
+    background:var(--bg);
+    transform:translateX(100vw);
+    transition:transform 0.3s ease;
+  }
+  #chatView.open {
+    transform:translateX(0) !important;
+    display:flex !important;
+  }
   .back-btn { display:flex !important; }
-  .msg-group { max-width:78%; }
+  .msg-group { max-width:80%; }
   .auth-box { width:94vw; padding:20px 16px; }
   .msgs { padding:12px 10px; }
-  .input-area { padding:8px 10px; }
+  .input-area { padding:8px 10px; gap:6px; }
   .chat-header { padding:10px 12px; }
-  .empty-main { display:none; }
+  .empty-main { display:none !important; }
 }
-::-webkit-scrollbar { width:4px; }
-::-webkit-scrollbar-track { background:transparent; }
-::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
 </style>
 </head>
 <body>
@@ -461,8 +478,12 @@ async function openChat(chatId) {
   if(!currentChat) return;
   if(socket) { socket.emit('join_chat', chatId); }
   document.getElementById('emptyMain').style.display='none';
-  const cv=document.getElementById('chatView'); cv.style.display='flex';
-  if(window.innerWidth <= 650) { document.querySelector('.sidebar').classList.add('hidden'); }
+  const cv=document.getElementById('chatView');
+  cv.style.display='flex';
+  if(window.innerWidth <= 700) {
+    document.querySelector('.sidebar').classList.add('hidden');
+    cv.classList.add('open');
+  }
   const other = currentChat.is_group ? null : currentChat.members?.find(m=>m.user_id!==me.id);
   const name = currentChat.is_group ? (currentChat.name||'Группа') : (other?.profiles?.display_name||other?.profiles?.username||'?');
   const color = getColor(name);
@@ -476,8 +497,10 @@ async function openChat(chatId) {
   loadMessages();
 }
 function closeChat() {
-  if(window.innerWidth <= 650) {
-    document.getElementById('chatView').style.display = 'none';
+  if(window.innerWidth <= 700) {
+    const cv = document.getElementById('chatView');
+    cv.classList.remove('open');
+    cv.style.display = 'none';
     document.querySelector('.sidebar').classList.remove('hidden');
   }
 }
