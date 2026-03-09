@@ -618,6 +618,10 @@ function connectSocket(){
   socket.on('call_answer',async({answer})=>{if(peerConnection)await peerConnection.setRemoteDescription(answer);document.getElementById('callStatus').textContent='Разговор';});
   socket.on('ice_candidate',async({candidate})=>{if(peerConnection)await peerConnection.addIceCandidate(candidate);});
   socket.on('call_end',()=>endCall());
+  socket.on('message_deleted',({message_id})=>{
+    const row=document.querySelector(`[data-msg-id="${message_id}"]`);
+    if(row)row.remove();
+  });
 }
 
 // CHATS
@@ -808,9 +812,30 @@ function toggleAttachMenu(){const m=document.getElementById('attachMenu');m.styl
 async function addReaction(msgId,emoji){await api('POST',`/api/messages/${msgId}/reactions`,{emoji});}
 
 // CONTEXT MENU
-function showCtx(e,msgId){e.preventDefault();ctxMsgId=msgId;const m=document.getElementById('ctxMenu');m.style.display='block';m.style.left=e.clientX+'px';m.style.top=e.clientY+'px';}
+function showCtx(e,msgId){
+  e.preventDefault();ctxMsgId=msgId;
+  const m=document.getElementById('ctxMenu');
+  m.style.display='block';
+  // Position so menu never goes off screen
+  const mw=160,mh=90;
+  const ww=window.innerWidth,wh=window.innerHeight;
+  let x=e.clientX,y=e.clientY;
+  if(x+mw>ww)x=ww-mw-8;
+  if(y+mh>wh)y=wh-mh-8;
+  if(x<8)x=8;
+  if(y<8)y=8;
+  m.style.left=x+'px';m.style.top=y+'px';
+}
 function ctxReact(){document.getElementById('ctxMenu').style.display='none';const emojis=['👍','❤️','😂','😮','😢','🔥'];addReaction(ctxMsgId,emojis[Math.floor(Math.random()*emojis.length)]);}
-function ctxDelete(){document.getElementById('ctxMenu').style.display='none';alert('Скоро будет добавлено');}
+async function ctxDelete(){
+  document.getElementById('ctxMenu').style.display='none';
+  if(!ctxMsgId)return;
+  const r=await api('DELETE',`/api/messages/${ctxMsgId}`);
+  if(r.success){
+    const row=document.querySelector(`[data-msg-id="${ctxMsgId}"]`);
+    if(row)row.remove();
+  }
+}
 
 // USER PROFILE MODAL
 function openUserProfile(){
@@ -893,7 +918,7 @@ async function uploadAvatar(input){
   }catch(e){document.getElementById('editProfileMsg').style.color='var(--red)';document.getElementById('editProfileMsg').textContent='Ошибка загрузки';}
 }
 
-
+// CALLS
 async function startCall(type){
   if(!currentChat||!currentChat._otherUserId)return;
   callType=type;callPeerId=currentChat._otherUserId;
