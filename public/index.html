@@ -119,7 +119,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 .msg-row.me .msg-group { align-items:flex-end; }
 .msg-row.them .msg-group { align-items:flex-start; }
 .msg-sender { font-size:11px; color:var(--accent2); font-weight:600; margin-bottom:2px; padding:0 4px; }
-.msg-bubble { padding:9px 13px; border-radius:18px; font-size:14px; line-height:1.5; position:relative; word-break:break-word; }
+.msg-bubble { padding:9px 13px; border-radius:18px; font-size:14px; line-height:1.5; position:relative; word-break:break-word; white-space:pre-wrap; min-width:40px; display:inline-block; }
 .msg-row.them .msg-bubble { background:var(--bubble-them); border-bottom-left-radius:4px; }
 .msg-row.me .msg-bubble { background:var(--bubble-me); border-bottom-right-radius:4px; color:#fff; }
 .msg-time { font-size:10px; color:var(--muted); padding:0 4px; margin-top:2px; }
@@ -187,6 +187,23 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
 ::-webkit-scrollbar { width:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
+
+/* ===== MOBILE ===== */
+.back-btn { display:none; }
+@media (max-width: 650px) {
+  .sidebar { width:100%; min-width:unset; position:fixed; inset:0; z-index:10; transition:transform 0.25s; }
+  .sidebar.hidden { transform:translateX(-100%); }
+  .main { width:100%; }
+  .back-btn { display:flex !important; }
+  .msg-group { max-width:82%; }
+  .auth-box { width:92vw; padding:22px 18px; }
+  .msgs { padding:14px 10px; }
+  .input-area { padding:10px 10px; }
+  .chat-header { padding:10px 12px; }
+}
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
 </style>
 </head>
 <body>
@@ -250,6 +267,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       </div>
       <div id="chatView">
         <div class="chat-header">
+          <button class="icon-btn back-btn" onclick="closeChat()"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m12 5-7 7 7 7"/></svg></button>
           <div class="av" id="chatAvatar"></div>
           <div class="chat-header-info">
             <div class="chat-header-name" id="chatName"></div>
@@ -440,6 +458,7 @@ async function openChat(chatId) {
   if(socket) { socket.emit('join_chat', chatId); }
   document.getElementById('emptyMain').style.display='none';
   const cv=document.getElementById('chatView'); cv.style.display='flex';
+  if(window.innerWidth <= 650) { document.querySelector('.sidebar').classList.add('hidden'); }
   const other = currentChat.is_group ? null : currentChat.members?.find(m=>m.user_id!==me.id);
   const name = currentChat.is_group ? (currentChat.name||'Группа') : (other?.profiles?.display_name||other?.profiles?.username||'?');
   const color = getColor(name);
@@ -451,6 +470,12 @@ async function openChat(chatId) {
   currentChat._otherUserId = other?.user_id;
   renderChatList(chats);
   loadMessages();
+}
+function closeChat() {
+  if(window.innerWidth <= 650) {
+    document.getElementById('chatView').style.display = 'none';
+    document.querySelector('.sidebar').classList.remove('hidden');
+  }
 }
 function updateChatStatus(status) {
   const el=document.getElementById('chatStatus');
