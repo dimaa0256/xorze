@@ -13,26 +13,28 @@ function openUserProfile() {
   if(!other) return;
   const modal = document.getElementById('profileModal');
   const av = document.getElementById('profileModalAv');
+  const bg = document.getElementById('profileModalBg');
   const color = getColor(other.username);
-  av.style.background = other.avatar_url ? 'none' : color;
+  bg.style.background = `linear-gradient(180deg, ${color}99, ${color}dd)`;
+  av.style.background = color;
   if(other.avatar_url) {
-    av.innerHTML = `<img src="${other.avatar_url}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">`;
+    av.innerHTML = `<img src="${other.avatar_url}" style="width:80px;height:80px;object-fit:cover;">`;
+    bg.style.backgroundImage = `linear-gradient(180deg, ${color}44, ${color}ee), url(${other.avatar_url})`;
+    bg.style.backgroundSize = 'cover';
+    bg.style.backgroundPosition = 'center';
   } else {
     av.textContent = initials(other.display_name||other.username);
   }
   document.getElementById('profileModalName').textContent = other.display_name||other.username;
-  document.getElementById('profileModalTag').textContent = '@' + other.username;
+  document.getElementById('profileModalUsername').textContent = '@' + other.username;
   const status = other.status === 'online';
   document.getElementById('profileModalStatus').textContent = status ? '🟢 онлайн' : '⚫ не в сети';
-  document.getElementById('profileModalStatus').style.color = status ? 'var(--green)' : 'var(--muted)';
+  document.getElementById('profileModalStatus').style.color = status ? 'var(--green)' : 'rgba(255,255,255,0.6)';
   modal.style.display = 'flex';
 }
 function closeProfileModal() {
   document.getElementById('profileModal').style.display = 'none';
 }
-document.getElementById('profileModal').addEventListener('click', e => {
-  if(e.target === document.getElementById('profileModal')) closeProfileModal();
-});
 
 // ===== SETTINGS =====
 function openSettings() {
@@ -71,19 +73,34 @@ async function saveSettings() {
 }
 async function uploadAvatar(input) {
   if(!input.files[0]) return;
+  document.getElementById('settingsMsg').style.color='var(--muted)';
+  document.getElementById('settingsMsg').textContent = 'Загружаю фото...';
   const fd = new FormData();
   fd.append('file', input.files[0]);
-  const r = await fetch('/api/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
-  const data = await r.json();
-  if(data.url) {
-    await api('PATCH', '/api/users/me', { avatar_url: data.url });
-    me.avatar_url = data.url;
-    localStorage.setItem('xorze_user', JSON.stringify(me));
-    const myAv = document.getElementById('myAv');
-    myAv.innerHTML = `<img src="${data.url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`;
-    document.getElementById('settingsMsg').style.color='var(--green)';
-    document.getElementById('settingsMsg').textContent = '✓ Фото обновлено!';
-    openSettings();
+  try {
+    const r = await fetch('/api/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
+    const data = await r.json();
+    if(data.url) {
+      await api('PATCH', '/api/users/me', { avatar_url: data.url });
+      me.avatar_url = data.url;
+      localStorage.setItem('xorze_user', JSON.stringify(me));
+      // Update sidebar avatar
+      const myAv = document.getElementById('myAv');
+      myAv.style.background = 'none';
+      myAv.innerHTML = `<img src="${data.url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`;
+      // Update settings avatar
+      const settingsAv = document.getElementById('settingsAv');
+      settingsAv.style.background = 'none';
+      settingsAv.innerHTML = `<img src="${data.url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;"><div style="position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">📷</div>`;
+      document.getElementById('settingsMsg').style.color='var(--green)';
+      document.getElementById('settingsMsg').textContent = '✓ Фото обновлено!';
+    } else {
+      document.getElementById('settingsMsg').style.color='var(--red)';
+      document.getElementById('settingsMsg').textContent = 'Ошибка загрузки фото';
+    }
+  } catch(e) {
+    document.getElementById('settingsMsg').style.color='var(--red)';
+    document.getElementById('settingsMsg').textContent = 'Ошибка: ' + e.message;
   }
 }
 
@@ -335,14 +352,26 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
       <div class="auth-tab" onclick="switchTab('register')">Регистрация</div>
     </div>
     <div id="loginForm">
-      <div class="form-group"><label>Логин</label><input id="loginUsername" placeholder="твой_логин" autocomplete="username"></div>
-      <div class="form-group"><label>Пароль</label><input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="form-group"><label>Логин</label><input id="loginUsername" placeholder="" autocomplete="username"></div>
+      <div class="form-group"><label>Пароль</label><input id="loginPassword" type="password" placeholder="" autocomplete="current-password"></div>
       <button class="auth-btn" onclick="login()">Войти</button>
     </div>
     <div id="registerForm" style="display:none">
-      <div class="form-group"><label>Имя</label><input id="regName" placeholder="Как тебя зовут?"></div>
-      <div class="form-group"><label>Логин</label><input id="regUsername" placeholder="уникальный_логин"></div>
-      <div class="form-group"><label>Пароль</label><input id="regPassword" type="password" placeholder="мин. 6 символов"></div>
+      <div class="form-group">
+        <label>Имя</label>
+        <input id="regName" placeholder="">
+        <div style="font-size:11px;color:var(--muted);margin-top:5px;">⚠️ Имя нельзя будет поменять после регистрации</div>
+      </div>
+      <div class="form-group"><label>Логин</label><input id="regUsername" placeholder=""></div>
+      <div class="form-group"><label>Пароль</label><input id="regPassword" type="password" placeholder=""></div>
+      <div class="form-group">
+        <label>Номер телефона <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(необязательно)</span></label>
+        <input id="regPhone" placeholder="" type="tel">
+      </div>
+      <div class="form-group">
+        <label>Дата рождения <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0;">(необязательно)</span></label>
+        <input id="regBirthday" type="date" style="color-scheme:dark;">
+      </div>
       <button class="auth-btn" onclick="register()">Создать аккаунт</button>
     </div>
     <div class="auth-error" id="authError"></div>
@@ -494,7 +523,9 @@ async function register() {
   const display_name=document.getElementById('regName').value.trim();
   const username=document.getElementById('regUsername').value.trim().toLowerCase();
   const password=document.getElementById('regPassword').value;
-  const r = await api('POST','/api/register',{username,password,display_name});
+  const phone=document.getElementById('regPhone').value.trim();
+  const birthday=document.getElementById('regBirthday').value;
+  const r = await api('POST','/api/register',{username,password,display_name,phone,birthday});
   if(r.error) return document.getElementById('authError').textContent=r.error;
   token=r.token; me=r.user;
   localStorage.setItem('xorze_token',token);
@@ -806,26 +837,28 @@ function openUserProfile() {
   if(!other) return;
   const modal = document.getElementById('profileModal');
   const av = document.getElementById('profileModalAv');
+  const bg = document.getElementById('profileModalBg');
   const color = getColor(other.username);
-  av.style.background = other.avatar_url ? 'none' : color;
+  bg.style.background = `linear-gradient(180deg, ${color}99, ${color}dd)`;
+  av.style.background = color;
   if(other.avatar_url) {
-    av.innerHTML = `<img src="${other.avatar_url}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">`;
+    av.innerHTML = `<img src="${other.avatar_url}" style="width:80px;height:80px;object-fit:cover;">`;
+    bg.style.backgroundImage = `linear-gradient(180deg, ${color}44, ${color}ee), url(${other.avatar_url})`;
+    bg.style.backgroundSize = 'cover';
+    bg.style.backgroundPosition = 'center';
   } else {
     av.textContent = initials(other.display_name||other.username);
   }
   document.getElementById('profileModalName').textContent = other.display_name||other.username;
-  document.getElementById('profileModalTag').textContent = '@' + other.username;
+  document.getElementById('profileModalUsername').textContent = '@' + other.username;
   const status = other.status === 'online';
   document.getElementById('profileModalStatus').textContent = status ? '🟢 онлайн' : '⚫ не в сети';
-  document.getElementById('profileModalStatus').style.color = status ? 'var(--green)' : 'var(--muted)';
+  document.getElementById('profileModalStatus').style.color = status ? 'var(--green)' : 'rgba(255,255,255,0.6)';
   modal.style.display = 'flex';
 }
 function closeProfileModal() {
   document.getElementById('profileModal').style.display = 'none';
 }
-document.getElementById('profileModal').addEventListener('click', e => {
-  if(e.target === document.getElementById('profileModal')) closeProfileModal();
-});
 
 // ===== SETTINGS =====
 function openSettings() {
@@ -864,37 +897,74 @@ async function saveSettings() {
 }
 async function uploadAvatar(input) {
   if(!input.files[0]) return;
+  document.getElementById('settingsMsg').style.color='var(--muted)';
+  document.getElementById('settingsMsg').textContent = 'Загружаю фото...';
   const fd = new FormData();
   fd.append('file', input.files[0]);
-  const r = await fetch('/api/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
-  const data = await r.json();
-  if(data.url) {
-    await api('PATCH', '/api/users/me', { avatar_url: data.url });
-    me.avatar_url = data.url;
-    localStorage.setItem('xorze_user', JSON.stringify(me));
-    const myAv = document.getElementById('myAv');
-    myAv.innerHTML = `<img src="${data.url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`;
-    document.getElementById('settingsMsg').style.color='var(--green)';
-    document.getElementById('settingsMsg').textContent = '✓ Фото обновлено!';
-    openSettings();
+  try {
+    const r = await fetch('/api/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:fd });
+    const data = await r.json();
+    if(data.url) {
+      await api('PATCH', '/api/users/me', { avatar_url: data.url });
+      me.avatar_url = data.url;
+      localStorage.setItem('xorze_user', JSON.stringify(me));
+      // Update sidebar avatar
+      const myAv = document.getElementById('myAv');
+      myAv.style.background = 'none';
+      myAv.innerHTML = `<img src="${data.url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">`;
+      // Update settings avatar
+      const settingsAv = document.getElementById('settingsAv');
+      settingsAv.style.background = 'none';
+      settingsAv.innerHTML = `<img src="${data.url}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;"><div style="position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0">📷</div>`;
+      document.getElementById('settingsMsg').style.color='var(--green)';
+      document.getElementById('settingsMsg').textContent = '✓ Фото обновлено!';
+    } else {
+      document.getElementById('settingsMsg').style.color='var(--red)';
+      document.getElementById('settingsMsg').textContent = 'Ошибка загрузки фото';
+    }
+  } catch(e) {
+    document.getElementById('settingsMsg').style.color='var(--red)';
+    document.getElementById('settingsMsg').textContent = 'Ошибка: ' + e.message;
   }
 }
 
 </script>
 
 <!-- USER PROFILE MODAL -->
-<div id="profileModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:400;align-items:center;justify-content:center;">
-  <div style="background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:32px;width:320px;max-width:90vw;animation:fadeUp 0.2s ease;position:relative;">
-    <button onclick="closeProfileModal()" style="position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--muted);font-size:20px;">✕</button>
-    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px;">
-      <div id="profileModalAv" style="width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-weight:700;font-size:26px;color:#fff;"></div>
-      <div style="text-align:center;">
-        <div id="profileModalName" style="font-family:Syne,sans-serif;font-weight:700;font-size:18px;"></div>
-        <div id="profileModalTag" style="font-size:13px;color:var(--muted);margin-top:3px;"></div>
-        <div id="profileModalStatus" style="font-size:12px;margin-top:4px;"></div>
+<div id="profileModal" onclick="if(event.target===this)closeProfileModal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:flex-end;justify-content:center;">
+  <div style="background:var(--panel);border-radius:24px 24px 0 0;width:100%;max-width:480px;animation:slideUp 0.25s ease;position:relative;overflow:hidden;padding-bottom:env(safe-area-inset-bottom,0px);">
+    @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+    <!-- BIG AVATAR HEADER -->
+    <div id="profileModalBg" style="height:220px;display:flex;align-items:flex-end;justify-content:flex-start;padding:16px;position:relative;background:var(--card);">
+      <button onclick="closeProfileModal()" style="position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.4);border:none;cursor:pointer;color:#fff;font-size:18px;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;">✕</button>
+      <div id="profileModalAv" style="width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-weight:700;font-size:26px;color:#fff;border:3px solid rgba(255,255,255,0.2);flex-shrink:0;overflow:hidden;"></div>
+      <div style="margin-left:14px;">
+        <div id="profileModalName" style="font-family:Syne,sans-serif;font-weight:700;font-size:20px;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>
+        <div id="profileModalStatus" style="font-size:13px;margin-top:2px;"></div>
       </div>
     </div>
-    <button id="profileModalMsgBtn" onclick="closeProfileModal()" style="width:100%;padding:11px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Написать сообщение</button>
+    <!-- ACTION BUTTONS -->
+    <div style="display:flex;gap:8px;padding:14px 16px;border-bottom:1px solid var(--border);">
+      <button onclick="closeProfileModal()" style="flex:1;padding:10px 6px;background:var(--card);border:none;border-radius:12px;color:var(--text);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Чат
+      </button>
+      <button onclick="closeProfileModal();startCall('audio')" style="flex:1;padding:10px 6px;background:var(--card);border:none;border-radius:12px;color:var(--text);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.81a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Звонок
+      </button>
+      <button onclick="closeProfileModal();startCall('video')" style="flex:1;padding:10px 6px;background:var(--card);border:none;border-radius:12px;color:var(--text);font-size:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Видео
+      </button>
+    </div>
+    <!-- INFO -->
+    <div style="padding:14px 16px 20px;">
+      <div id="profileModalTag" style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border-radius:12px;">
+        <svg width="18" height="18" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div>
+          <div id="profileModalUsername" style="font-size:14px;color:var(--text);"></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:1px;">Имя пользователя</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
