@@ -161,13 +161,20 @@ app.post('/api/upload', authMiddleware, upload.single('file'), async (req, res) 
   const filename = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
   const { data, error } = await supabase.storage.from('xorze-files').upload(filename, req.file.buffer, {
-    contentType: req.file.mimetype
+    contentType: req.file.mimetype,
+    upsert: true,
+    cacheControl: '3600'
   });
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error('Upload error:', error);
+    return res.status(500).json({ error: error.message });
+  }
 
   const { data: urlData } = supabase.storage.from('xorze-files').getPublicUrl(filename);
-  res.json({ url: urlData.publicUrl, type: req.file.mimetype.startsWith('image') ? 'image' : 'file', name: req.file.originalname });
+  const publicUrl = urlData.publicUrl;
+  console.log('Uploaded file URL:', publicUrl);
+  res.json({ url: publicUrl, type: req.file.mimetype.startsWith('image') ? 'image' : 'file', name: req.file.originalname });
 });
 
 // ========== UPDATE PROFILE ==========
