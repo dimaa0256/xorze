@@ -191,6 +191,20 @@ app.patch('/api/users/me', authMiddleware, async (req, res) => {
   res.json(data);
 });
 
+// ========== EDIT MESSAGE ==========
+
+app.patch('/api/messages/:msgId', authMiddleware, async (req, res) => {
+  const { msgId } = req.params;
+  const { content } = req.body;
+  const { data: msg } = await supabase.from('messages').select('*').eq('id', msgId).single();
+  if (!msg) return res.status(404).json({ error: 'Not found' });
+  if (msg.sender_id !== req.user.id) return res.status(403).json({ error: 'Not your message' });
+  const { data, error } = await supabase.from('messages').update({ content, edited: true }).eq('id', msgId).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  io.to(msg.chat_id).emit('message_edited', { message_id: msgId, content, chat_id: msg.chat_id });
+  res.json(data);
+});
+
 // ========== DELETE MESSAGE ==========
 
 app.delete('/api/messages/:msgId', authMiddleware, async (req, res) => {
