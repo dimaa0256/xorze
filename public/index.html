@@ -174,7 +174,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 /* SELECTION MODE */
 .msg-row.selected .msg-bubble{outline:2px solid var(--accent);outline-offset:2px;}
 .msg-row.selected{background:rgba(88,101,242,0.08);border-radius:8px;}
-.selection-bar{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--border);padding:12px 20px;display:none;align-items:center;justify-content:space-between;z-index:100;}
+.selection-bar{position:fixed;top:0;left:0;right:0;background:var(--panel);border-bottom:1px solid var(--border);padding:10px 16px;display:none;align-items:center;justify-content:space-between;z-index:150;height:56px;}
 .selection-bar.active{display:flex;}
 /* DELETE CONFIRM */
 .delete-confirm{background:var(--panel);border:1px solid var(--border);border-radius:20px;width:320px;max-width:90vw;padding:24px;animation:fadeUp 0.2s ease;}
@@ -410,6 +410,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     <div class="ctx-item" onclick="ctxReply()">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>Ответить
     </div>
+    <div class="ctx-item" onclick="ctxForward()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>Переслать
+    </div>
     <div class="ctx-item" onclick="ctxCopy()" id="ctxCopyBtn">
       <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Копировать
     </div>
@@ -451,10 +454,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 <!-- SELECTION BAR -->
 <div class="selection-bar" id="selectionBar">
-  <div style="font-size:14px;color:var(--muted)" id="selectionCount">0 выбрано</div>
-  <div style="display:flex;gap:8px">
-    <button onclick="deleteSelected()" style="padding:8px 16px;background:var(--red);border:none;border-radius:10px;color:#fff;font-size:13px;cursor:pointer;">Удалить</button>
-    <button onclick="cancelSelection()" style="padding:8px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;cursor:pointer;">Отмена</button>
+  <button onclick="cancelSelection()" class="icon-btn" style="color:var(--text);padding:8px 12px;font-size:13px;display:flex;align-items:center;gap:6px;">
+    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    Отмена
+  </button>
+  <div style="font-size:14px;font-weight:600;color:var(--text)" id="selectionCount">0</div>
+  <div style="display:flex;gap:4px">
+    <button onclick="forwardSelected()" class="icon-btn" title="Переслать">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>
+    </button>
+    <button onclick="deleteSelected()" class="icon-btn" style="color:var(--red)" title="Удалить">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+    </button>
   </div>
 </div>
 
@@ -797,7 +808,7 @@ function appendMessage(msg,scroll=true){
   const msgDataJson=JSON.stringify(msg).replace(/'/g,"\\'").replace(/"/g,'&quot;');
   row.innerHTML=`${!isMe?`<div class="av sm" style="background:${avatarUrl?'none':color}">${avHtml}</div>`:''}
     <div class="msg-group">
-      <div class="msg-touch-area" oncontextmenu="showCtx(event,'${msg.id}',msgDataStore['${msg.id}'])" onclick="selectionMode&&toggleSelectMsg('${msg.id}')">${content}</div>
+      <div class="msg-touch-area" oncontextmenu="showCtx(event,'${msg.id}',msgDataStore['${msg.id}'])" onclick="if(selectionMode)toggleSelectMsg('${msg.id}')">${content}</div>
       ${reactions}
       <div class="msg-time">${timeStr(msg.created_at)}</div>
     </div>`;
@@ -972,15 +983,16 @@ function cancelEdit(){
 function ctxDelete(){
   hideCtx();
   if(!ctxMsgId)return;
-  const row=document.querySelector(`[data-msg-id="${ctxMsgId}"]`);
-  const senderName=ctxMsgData?.profiles?.display_name||ctxMsgData?.profiles?.username||'Пользователь';
-  const senderAvUrl=ctxMsgData?.profiles?.avatar_url;
-  const senderColor=getColor(senderName);
-  const avHtml=senderAvUrl?`<img src="${senderAvUrl}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">`:`<div class="av sm" style="background:${senderColor}">${initials(senderName)}</div>`;
+  // Show other user (recipient/chat partner), not sender
+  const other=currentChat?._otherUser;
+  const otherName=other?.display_name||other?.username||'Собеседник';
+  const otherAvUrl=other?.avatar_url;
+  const otherColor=getColor(otherName);
+  const avHtml=otherAvUrl?`<img src="${otherAvUrl}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">`:`<div class="av sm" style="background:${otherColor};width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:Syne,sans-serif;font-weight:700;font-size:12px;color:#fff;">${initials(otherName)}</div>`;
   const preview=ctxMsgData?.file_url?'📎 Файл':(ctxMsgData?.content||'').slice(0,60);
   document.getElementById('deleteConfirmUser').innerHTML=`
-    ${avHtml}
-    <div><div style="font-weight:500;font-size:13px">${senderName}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${preview}</div></div>`;
+    <div style="display:flex;align-items:center;gap:10px">${avHtml}
+    <div><div style="font-weight:500;font-size:13px">${otherName}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${preview}</div></div></div>`;
   document.getElementById('deleteModal').style.display='flex';
 }
 function closeDeleteModal(){document.getElementById('deleteModal').style.display='none';}
@@ -1009,7 +1021,7 @@ function updateSelectionBar(){
   const bar=document.getElementById('selectionBar');
   if(selectedMsgs.size===0){cancelSelection();return;}
   bar.classList.add('active');
-  document.getElementById('selectionCount').textContent=`${selectedMsgs.size} выбрано`;
+  document.getElementById('selectionCount').textContent=selectedMsgs.size;
 }
 function cancelSelection(){
   selectionMode=false;
@@ -1017,6 +1029,8 @@ function cancelSelection(){
   selectedMsgs.clear();
   document.getElementById('selectionBar').classList.remove('active');
 }
+function ctxForward(){hideCtx();alert('Пересылка будет добавлена скоро');}
+function forwardSelected(){alert('Пересылка будет добавлена скоро');}
 async function deleteSelected(){
   for(const id of selectedMsgs){
     const r=await api('DELETE',`/api/messages/${id}`);
