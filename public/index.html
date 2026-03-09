@@ -160,10 +160,28 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 #localVideo{width:160px;height:100px;position:fixed;bottom:140px;right:20px;z-index:201;}
 
 /* CONTEXT MENU */
-.ctx-menu{position:fixed;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:4px;z-index:300;display:none;min-width:150px;box-shadow:0 8px 24px rgba(0,0,0,0.4);}
-.ctx-item{padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13.5px;display:flex;align-items:center;gap:8px;transition:background 0.15s;}
-.ctx-item:hover{background:var(--hover);}
+.ctx-menu{position:fixed;background:#1e2130;border-radius:16px;padding:0;z-index:300;display:none;min-width:220px;box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden;}
+.ctx-reactions{display:flex;align-items:center;gap:2px;padding:8px 10px;border-bottom:1px solid var(--border);background:#252836;}
+.ctx-reaction-btn{width:38px;height:38px;border-radius:50%;border:none;background:none;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
+.ctx-reaction-btn:hover{background:var(--hover);}
+.ctx-reaction-more{width:34px;height:34px;border-radius:50%;border:none;background:var(--border);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.ctx-items{padding:4px;}
+.ctx-item{padding:11px 14px;border-radius:10px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:12px;transition:background 0.15s;color:var(--text);}
+.ctx-item:hover{background:rgba(255,255,255,0.06);}
 .ctx-item.danger{color:var(--red);}
+.ctx-item svg{flex-shrink:0;opacity:0.7;}
+.ctx-divider{height:1px;background:var(--border);margin:3px 0;}
+/* SELECTION MODE */
+.msg-row.selected .msg-bubble{outline:2px solid var(--accent);outline-offset:2px;}
+.msg-row.selected{background:rgba(88,101,242,0.08);border-radius:8px;}
+.selection-bar{position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:1px solid var(--border);padding:12px 20px;display:none;align-items:center;justify-content:space-between;z-index:100;}
+.selection-bar.active{display:flex;}
+/* DELETE CONFIRM */
+.delete-confirm{background:var(--panel);border:1px solid var(--border);border-radius:20px;width:320px;max-width:90vw;padding:24px;animation:fadeUp 0.2s ease;}
+.delete-confirm-user{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--card);border-radius:12px;margin:14px 0;}
+/* EDIT MESSAGE */
+.edit-bar{display:none;padding:8px 18px;background:var(--panel);border-top:1px solid var(--accent);align-items:center;gap:10px;}
+.edit-bar.active{display:flex;}
 
 /* MODAL BASE */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:400;align-items:flex-end;justify-content:center;}
@@ -326,6 +344,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
             <div class="typing-text" id="typingText"></div>
           </div>
         </div>
+        <div id="editBarWrap"></div>
         <div style="position:relative">
           <div class="emoji-picker" id="emojiPicker"><div class="emoji-grid" id="emojiGrid"></div></div>
           <div class="attach-menu" id="attachMenu">
@@ -379,8 +398,64 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 <!-- CONTEXT MENU -->
 <div class="ctx-menu" id="ctxMenu">
-  <div class="ctx-item" onclick="ctxReact()">😀 Реакция</div>
-  <div class="ctx-item danger" onclick="ctxDelete()">🗑 Удалить</div>
+  <div class="ctx-reactions">
+    <button class="ctx-reaction-btn" onclick="ctxQuickReact('❤️')">❤️</button>
+    <button class="ctx-reaction-btn" onclick="ctxQuickReact('👍')">👍</button>
+    <button class="ctx-reaction-btn" onclick="ctxQuickReact('😂')">😂</button>
+    <button class="ctx-reaction-btn" onclick="ctxQuickReact('😮')">😮</button>
+    <button class="ctx-reaction-btn" onclick="ctxQuickReact('😢')">😢</button>
+    <button class="ctx-reaction-btn" onclick="ctxQuickReact('🔥')">🔥</button>
+  </div>
+  <div class="ctx-items">
+    <div class="ctx-item" onclick="ctxReply()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>Ответить
+    </div>
+    <div class="ctx-item" onclick="ctxCopy()" id="ctxCopyBtn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Копировать
+    </div>
+    <div class="ctx-item" onclick="ctxSave()" id="ctxSaveBtn" style="display:none">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Сохранить
+    </div>
+    <div class="ctx-item" onclick="ctxSelect()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Выделить
+    </div>
+    <div class="ctx-item" onclick="ctxEdit()" id="ctxEditBtn" style="display:none">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Изменить
+    </div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item danger" onclick="ctxDelete()">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Удалить
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay center" id="deleteModal" onclick="if(event.target===this)closeDeleteModal()">
+  <div class="delete-confirm">
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;margin-bottom:6px">Удалить сообщение?</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Это действие нельзя отменить.</div>
+    <div class="delete-confirm-user" id="deleteConfirmUser"></div>
+    <div style="display:flex;gap:10px;margin-top:6px">
+      <button onclick="closeDeleteModal()" style="flex:1;padding:11px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;cursor:pointer;">Отмена</button>
+      <button onclick="confirmDelete()" style="flex:1;padding:11px;background:var(--red);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Удалить</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MESSAGE BAR -->
+<div class="edit-bar" id="editBar">
+  <svg width="16" height="16" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+  <div style="flex:1;font-size:13px;color:var(--muted)">Редактирование сообщения</div>
+  <button onclick="cancelEdit()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:18px;padding:4px;">✕</button>
+</div>
+
+<!-- SELECTION BAR -->
+<div class="selection-bar" id="selectionBar">
+  <div style="font-size:14px;color:var(--muted)" id="selectionCount">0 выбрано</div>
+  <div style="display:flex;gap:8px">
+    <button onclick="deleteSelected()" style="padding:8px 16px;background:var(--red);border:none;border-radius:10px;color:#fff;font-size:13px;cursor:pointer;">Удалить</button>
+    <button onclick="cancelSelection()" style="padding:8px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;cursor:pointer;">Отмена</button>
+  </div>
 </div>
 
 <!-- USER PROFILE MODAL -->
@@ -536,6 +611,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 </div>
 
 <script>
+const msgDataStore={};
 let token=localStorage.getItem('xorze_token');
 let me=JSON.parse(localStorage.getItem('xorze_user')||'null');
 let socket=null,currentChat=null,typingTimeout=null,typingUsers={};
@@ -621,6 +697,12 @@ function connectSocket(){
   socket.on('message_deleted',({message_id})=>{
     const row=document.querySelector(`[data-msg-id="${message_id}"]`);
     if(row)row.remove();
+    delete msgDataStore[message_id];
+  });
+  socket.on('message_edited',({message_id,content})=>{
+    const bubble=document.querySelector(`[data-msg-id="${message_id}"] .msg-bubble`);
+    if(bubble){bubble.textContent=content;}
+    if(msgDataStore[message_id])msgDataStore[message_id].content=content;
   });
 }
 
@@ -712,12 +794,18 @@ function appendMessage(msg,scroll=true){
   const row=document.createElement('div');
   row.className=`msg-row ${isMe?'me':'them'}`;
   row.dataset.msgId=msg.id;
+  const msgDataJson=JSON.stringify(msg).replace(/'/g,"\\'").replace(/"/g,'&quot;');
   row.innerHTML=`${!isMe?`<div class="av sm" style="background:${avatarUrl?'none':color}">${avHtml}</div>`:''}
     <div class="msg-group">
-      <div oncontextmenu="showCtx(event,'${msg.id}')">${content}</div>
+      <div class="msg-touch-area" oncontextmenu="showCtx(event,'${msg.id}',msgDataStore['${msg.id}'])" onclick="selectionMode&&toggleSelectMsg('${msg.id}')">${content}</div>
       ${reactions}
       <div class="msg-time">${timeStr(msg.created_at)}</div>
     </div>`;
+  msgDataStore[msg.id]=msg;
+  // long press for mobile
+  row.addEventListener('touchstart',()=>{longPressTimer=setTimeout(()=>{enterSelectionMode(msg.id);},500);},{passive:true});
+  row.addEventListener('touchend',()=>clearTimeout(longPressTimer),{passive:true});
+  row.addEventListener('touchmove',()=>clearTimeout(longPressTimer),{passive:true});
   container.appendChild(row);
   if(scroll)container.scrollTop=container.scrollHeight;
 }
@@ -736,6 +824,12 @@ async function sendMessage(){
   const input=document.getElementById('msgInput');
   const text=input.value.trim();
   if(!text||!currentChat)return;
+  if(editingMsgId){
+    await api('PATCH',`/api/messages/${editingMsgId}`,{content:text});
+    const bubble=document.querySelector(`[data-msg-id="${editingMsgId}"] .msg-bubble`);
+    if(bubble)bubble.textContent=text;
+    cancelEdit();return;
+  }
   input.value='';input.style.height='auto';
   if(socket)socket.emit('stop_typing',{chatId:currentChat.id});
   await api('POST',`/api/chats/${currentChat.id}/messages`,{content:text});
@@ -812,29 +906,123 @@ function toggleAttachMenu(){const m=document.getElementById('attachMenu');m.styl
 async function addReaction(msgId,emoji){await api('POST',`/api/messages/${msgId}/reactions`,{emoji});}
 
 // CONTEXT MENU
-function showCtx(e,msgId){
-  e.preventDefault();ctxMsgId=msgId;
+let ctxMsgData=null;
+let editingMsgId=null;
+let selectedMsgs=new Set();
+let selectionMode=false;
+let longPressTimer=null;
+
+function showCtx(e,msgId,msgData){
+  e.preventDefault();e.stopPropagation();
+  ctxMsgId=msgId;ctxMsgData=msgData||null;
   const m=document.getElementById('ctxMenu');
   m.style.display='block';
-  // Position so menu never goes off screen
-  const mw=160,mh=90;
-  const ww=window.innerWidth,wh=window.innerHeight;
-  let x=e.clientX,y=e.clientY;
-  if(x+mw>ww)x=ww-mw-8;
-  if(y+mh>wh)y=wh-mh-8;
-  if(x<8)x=8;
-  if(y<8)y=8;
-  m.style.left=x+'px';m.style.top=y+'px';
+  // Show/hide edit and save buttons
+  const isMe=msgData&&msgData.sender_id===me.id;
+  const isFile=msgData&&msgData.file_url;
+  document.getElementById('ctxEditBtn').style.display=isMe&&!isFile?'flex':'none';
+  document.getElementById('ctxSaveBtn').style.display=isFile?'flex':'none';
+  document.getElementById('ctxCopyBtn').style.display=!isFile?'flex':'none';
+  // Smart positioning
+  setTimeout(()=>{
+    const mw=m.offsetWidth||220,mh=m.offsetHeight||280;
+    const ww=window.innerWidth,wh=window.innerHeight;
+    let x=e.clientX,y=e.clientY;
+    if(x+mw>ww-8)x=ww-mw-8;
+    if(y+mh>wh-8)y=wh-mh-8;
+    if(x<8)x=8;if(y<8)y=8;
+    m.style.left=x+'px';m.style.top=y+'px';
+  },0);
 }
-function ctxReact(){document.getElementById('ctxMenu').style.display='none';const emojis=['👍','❤️','😂','😮','😢','🔥'];addReaction(ctxMsgId,emojis[Math.floor(Math.random()*emojis.length)]);}
-async function ctxDelete(){
-  document.getElementById('ctxMenu').style.display='none';
+function hideCtx(){document.getElementById('ctxMenu').style.display='none';}
+function ctxQuickReact(emoji){hideCtx();addReaction(ctxMsgId,emoji);}
+function ctxMoreReact(){hideCtx();const emojis=['😀','🥰','😎','🤔','🥳','💯','✅','🙏','😭','🤣','💀','👀','🫡'];addReaction(ctxMsgId,emojis[Math.floor(Math.random()*emojis.length)]);}
+function ctxReply(){hideCtx();}
+function ctxCopy(){
+  hideCtx();
+  if(ctxMsgData&&ctxMsgData.content){navigator.clipboard.writeText(ctxMsgData.content).catch(()=>{});}
+}
+function ctxSave(){
+  hideCtx();
+  if(ctxMsgData&&ctxMsgData.file_url){
+    const a=document.createElement('a');a.href=ctxMsgData.file_url;a.download='';a.target='_blank';a.click();
+  }
+}
+function ctxSelect(){
+  hideCtx();
+  enterSelectionMode(ctxMsgId);
+}
+function ctxEdit(){
+  hideCtx();
+  if(!ctxMsgData||ctxMsgData.sender_id!==me.id)return;
+  editingMsgId=ctxMsgId;
+  const input=document.getElementById('msgInput');
+  input.value=ctxMsgData.content||'';
+  input.focus();
+  const bar=document.getElementById('editBar');
+  bar.classList.add('active');
+  const wrap=document.getElementById('editBarWrap');
+  wrap.appendChild(bar);
+}
+function cancelEdit(){
+  editingMsgId=null;
+  document.getElementById('msgInput').value='';
+  document.getElementById('editBar').classList.remove('active');
+}
+function ctxDelete(){
+  hideCtx();
+  if(!ctxMsgId)return;
+  const row=document.querySelector(`[data-msg-id="${ctxMsgId}"]`);
+  const senderName=ctxMsgData?.profiles?.display_name||ctxMsgData?.profiles?.username||'Пользователь';
+  const senderAvUrl=ctxMsgData?.profiles?.avatar_url;
+  const senderColor=getColor(senderName);
+  const avHtml=senderAvUrl?`<img src="${senderAvUrl}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;">`:`<div class="av sm" style="background:${senderColor}">${initials(senderName)}</div>`;
+  const preview=ctxMsgData?.file_url?'📎 Файл':(ctxMsgData?.content||'').slice(0,60);
+  document.getElementById('deleteConfirmUser').innerHTML=`
+    ${avHtml}
+    <div><div style="font-weight:500;font-size:13px">${senderName}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">${preview}</div></div>`;
+  document.getElementById('deleteModal').style.display='flex';
+}
+function closeDeleteModal(){document.getElementById('deleteModal').style.display='none';}
+async function confirmDelete(){
+  closeDeleteModal();
   if(!ctxMsgId)return;
   const r=await api('DELETE',`/api/messages/${ctxMsgId}`);
-  if(r.success){
-    const row=document.querySelector(`[data-msg-id="${ctxMsgId}"]`);
-    if(row)row.remove();
+  if(r.success){const row=document.querySelector(`[data-msg-id="${ctxMsgId}"]`);if(row)row.remove();}
+}
+
+// SELECTION MODE
+function enterSelectionMode(msgId){
+  selectionMode=true;
+  selectedMsgs=new Set([msgId]);
+  document.querySelector(`[data-msg-id="${msgId}"]`)?.classList.add('selected');
+  updateSelectionBar();
+}
+function toggleSelectMsg(msgId){
+  if(!selectionMode)return;
+  const row=document.querySelector(`[data-msg-id="${msgId}"]`);
+  if(selectedMsgs.has(msgId)){selectedMsgs.delete(msgId);row?.classList.remove('selected');}
+  else{selectedMsgs.add(msgId);row?.classList.add('selected');}
+  updateSelectionBar();
+}
+function updateSelectionBar(){
+  const bar=document.getElementById('selectionBar');
+  if(selectedMsgs.size===0){cancelSelection();return;}
+  bar.classList.add('active');
+  document.getElementById('selectionCount').textContent=`${selectedMsgs.size} выбрано`;
+}
+function cancelSelection(){
+  selectionMode=false;
+  selectedMsgs.forEach(id=>document.querySelector(`[data-msg-id="${id}"]`)?.classList.remove('selected'));
+  selectedMsgs.clear();
+  document.getElementById('selectionBar').classList.remove('active');
+}
+async function deleteSelected(){
+  for(const id of selectedMsgs){
+    const r=await api('DELETE',`/api/messages/${id}`);
+    if(r.success){const row=document.querySelector(`[data-msg-id="${id}"]`);if(row)row.remove();}
   }
+  cancelSelection();
 }
 
 // USER PROFILE MODAL
