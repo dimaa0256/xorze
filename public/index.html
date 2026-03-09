@@ -893,7 +893,7 @@ async function uploadAvatar(input){
   }catch(e){document.getElementById('editProfileMsg').style.color='var(--red)';document.getElementById('editProfileMsg').textContent='Ошибка загрузки';}
 }
 
-// CALLS
+
 async function startCall(type){
   if(!currentChat||!currentChat._otherUserId)return;
   callType=type;callPeerId=currentChat._otherUserId;
