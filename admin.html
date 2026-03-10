@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XORZE Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#0a0b0f;--panel:#13161e;--card:#191d28;--accent:#5865f2;--green:#23d18b;--red:#ed4245;--text:#dcddde;--muted:#72767d;--border:#1e2130;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+#loginWrap{display:flex;align-items:center;justify-content:center;min-height:100vh;}
+.login-box{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:36px;width:340px;}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;background:linear-gradient(135deg,#7289da,#5865f2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;}
+.logo-sub{font-size:12px;color:var(--muted);margin-bottom:24px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;letter-spacing:0.5px;text-transform:uppercase;}
+.field input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
+.field input:focus{border-color:var(--accent);}
+.btn{width:100%;padding:12px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;font-family:'Syne',sans-serif;cursor:pointer;}
+.err{color:var(--red);font-size:13px;margin-top:8px;text-align:center;min-height:18px;}
+
+/* ADMIN PANEL */
+#adminWrap{display:none;min-height:100vh;}
+.topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:14px;}
+.topbar-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:18px;background:linear-gradient(135deg,#7289da,#5865f2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.topbar-badge{background:#ed424522;color:var(--red);font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:0.5px;}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted);}
+.logout-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.logout-btn:hover{color:var(--text);border-color:var(--accent);}
+
+.content{padding:24px;max-width:1100px;margin:0 auto;}
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px;}
+.stat-val{font-family:'Syne',sans-serif;font-weight:700;font-size:28px;margin-bottom:4px;}
+.stat-label{font-size:12px;color:var(--muted);}
+
+.section-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;}
+.refresh-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--muted);font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.refresh-btn:hover{color:var(--text);}
+
+.table-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+table{width:100%;border-collapse:collapse;}
+th{padding:12px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;border-bottom:1px solid var(--border);}
+td{padding:12px 16px;font-size:13.5px;border-bottom:1px solid var(--border);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+.av-sm{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:11px;color:#fff;overflow:hidden;flex-shrink:0;vertical-align:middle;margin-right:8px;}
+.av-sm img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
+.online{background:var(--green);}
+.offline{background:var(--muted);}
+.tag{font-size:11px;color:var(--muted);}
+.del-btn{background:none;border:1px solid #ed424533;border-radius:7px;padding:4px 10px;color:var(--red);font-size:12px;cursor:pointer;}
+.del-btn:hover{background:#ed424511;}
+.empty{padding:32px;text-align:center;color:var(--muted);font-size:13px;}
+</style>
+</head>
+<body>
+
+<div id="loginWrap">
+  <div class="login-box">
+    <div class="logo">XORZE</div>
+    <div class="logo-sub">Панель администратора</div>
+    <div class="field"><label>Логин</label><input id="aUsername" type="text"></div>
+    <div class="field"><label>Пароль</label><input id="aPassword" type="password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+    <button class="btn" onclick="adminLogin()">Войти</button>
+    <div class="err" id="aErr"></div>
+  </div>
+</div>
+
+<div id="adminWrap">
+  <div class="topbar">
+    <div class="topbar-logo">XORZE</div>
+    <div class="topbar-badge">ADMIN</div>
+    <div class="topbar-right">
+      <span id="adminName"></span>
+      <button class="logout-btn" onclick="adminLogout()">Выйти</button>
+    </div>
+  </div>
+  <div class="content">
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-val" id="statUsers">—</div><div class="stat-label">Пользователей</div></div>
+      <div class="stat-card"><div class="stat-val" id="statOnline">—</div><div class="stat-label">Онлайн сейчас</div></div>
+      <div class="stat-card"><div class="stat-val" id="statMessages">—</div><div class="stat-label">Сообщений всего</div></div>
+      <div class="stat-card"><div class="stat-val" id="statChats">—</div><div class="stat-label">Чатов</div></div>
+    </div>
+
+    <div class="section-title">
+      Пользователи
+      <button class="refresh-btn" onclick="loadUsers()">↻ Обновить</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Пользователь</th>
+          <th>Логин</th>
+          <th>Статус</th>
+          <th>Дата рождения</th>
+          <th>Телефон</th>
+          <th>Действия</th>
+        </tr></thead>
+        <tbody id="usersTable"><tr><td colspan="6" class="empty">Загрузка...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const ADMIN_USERNAME = 'дима';
+const COLORS=['#5865f2','#e91e8c','#f04747','#43b581','#faa61a','#7289da','#1abc9c','#e67e22'];
+function getColor(s){let h=0;for(let c of s||'X')h=(h+c.charCodeAt(0))%COLORS.length;return COLORS[h];}
+function initials(n){return(n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+
+// Use main app token first, fallback to admin-specific token
+let adminToken = localStorage.getItem('xorze_token') || localStorage.getItem('xorze_admin_token');
+let adminUser = JSON.parse(localStorage.getItem('xorze_user') || localStorage.getItem('xorze_admin_user') || 'null');
+
+async function api(method, path, body) {
+  try {
+    const r = await fetch(path, {
+      method,
+      headers: {
+        'Content-Type':'application/json',
+        ...(adminToken ? {'Authorization':'Bearer '+adminToken} : {})
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const data = await r.json().catch(() => ({error: r.statusText}));
+    return data;
+  } catch(e) {
+    console.error('API error:', e);
+    return { error: e.message };
+  }
+}
+
+async function adminLogin() {
+  const username = document.getElementById('aUsername').value.trim();
+  const password = document.getElementById('aPassword').value;
+  if (username !== ADMIN_USERNAME) {
+    document.getElementById('aErr').textContent = 'Нет доступа';
+    return;
+  }
+  document.getElementById('aErr').textContent = '';
+  const r = await api('POST', '/api/login', {username, password});
+  if (r.error) { document.getElementById('aErr').textContent = r.error; return; }
+  adminToken = r.token;
+  adminUser = r.user;
+  localStorage.setItem('xorze_admin_token', adminToken);
+  localStorage.setItem('xorze_admin_user', JSON.stringify(adminUser));
+  showAdmin();
+}
+
+function adminLogout() {
+  localStorage.removeItem('xorze_admin_token');
+  localStorage.removeItem('xorze_admin_user');
+  location.reload();
+}
+
+function showAdmin() {
+  document.getElementById('loginWrap').style.display = 'none';
+  document.getElementById('adminWrap').style.display = 'block';
+  document.getElementById('adminName').textContent = adminUser?.display_name || adminUser?.username || '';
+  loadUsers();
+  loadStats();
+}
+
+async function loadStats() {
+  const msgs = await api('GET', '/api/admin/stats');
+  if (msgs && !msgs.error) {
+    document.getElementById('statMessages').textContent = msgs.messages ?? '—';
+    document.getElementById('statChats').textContent = msgs.chats ?? '—';
+  }
+}
+
+async function loadUsers() {
+  const tbody = document.getElementById('usersTable');
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">Загрузка...</td></tr>';
+  const users = await api('GET', '/api/admin/users');
+  if (!Array.isArray(users)) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Ошибка: ${users?.error || 'Нет доступа'}</td></tr>`;
+    if (users?.error === 'Not admin' || users?.error === 'Invalid token') {
+      adminLogout(); return;
+    }
+    return;
+  }
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет пользователей</td></tr>';
+    return;
+  }
+  document.getElementById('statUsers').textContent = users.length;
+  document.getElementById('statOnline').textContent = users.filter(u => u.status === 'online').length;
+  tbody.innerHTML = users.map(u => {
+    const color = getColor(u.username);
+    const avHtml = u.avatar_url
+      ? `<div class="av-sm"><img src="${u.avatar_url}"></div>`
+      : `<div class="av-sm" style="background:${color}">${initials(u.display_name||u.username)}</div>`;
+    const bday = u.birthday ? new Date(u.birthday).toLocaleDateString('ru', {day:'numeric',month:'long',year:'numeric'}) : '—';
+    const phone = u.phone || '—';
+    const isAdmin = u.username === ADMIN_USERNAME;
+    return `<tr>
+      <td>${avHtml}<span style="font-weight:500">${u.display_name||u.username}</span></td>
+      <td class="tag">@${u.username}${isAdmin?' <span style="color:var(--accent);font-size:10px">ADMIN</span>':''}</td>
+      <td><span class="status-dot ${u.status==='online'?'online':'offline'}"></span>${u.status==='online'?'Онлайн':'Не в сети'}</td>
+      <td>${bday}</td>
+      <td>${phone}</td>
+      <td>${isAdmin ? '' : `<button class="del-btn" onclick="banUser('${u.id}','${u.display_name||u.username}')">Удалить</button>`}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function banUser(userId, name) {
+  if (!confirm(`Удалить аккаунт ${name}?`)) return;
+  await api('DELETE', `/api/admin/users/${userId}`);
+  loadUsers();
+  loadStats();
+}
+
+// Auto-login: if already logged in as дима in main app - skip login screen
+if (adminToken && adminUser) {
+  if (adminUser.username === ADMIN_USERNAME) {
+    showAdmin();
+  } else {
+    // Logged in but not admin - show error
+    document.getElementById('aErr').textContent = 'Нет доступа для этого аккаунта';
+  }
+}
+</script>
+</body>
+</html>
