@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const http = require('http');
 const { Server } = require('socket.io');
 const bcrypt = require('bcryptjs');
@@ -10,6 +11,26 @@ const path = require('path');
 const multer = require('multer');
 
 const app = express();
+
+// Rate limiting
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 минута
+  max: 5,
+  message: { error: 'Слишком много попыток. Подождите минуту.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 час
+  max: 10,
+  message: { error: 'Слишком много регистраций с этого IP.' },
+});
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 200,
+  message: { error: 'Слишком много запросов. Подождите.' },
+});
+app.use('/api/', apiLimiter);
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
@@ -20,7 +41,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-const ADMIN_USERNAME = 'дима1';
+const ADMIN_USERNAME = 'дима';
 const adminMiddleware = async (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ error: 'No token' });
@@ -48,7 +69,7 @@ const authMiddleware = (req, res, next) => {
 
 // ========== AUTH ==========
 
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', registerLimiter, async (req, res) => {
   const { username, password, display_name, phone, birthday } = req.body;
   if (!username || !password) return res.status(400).json({ error: 'Username and password required' });
   if (password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' });
@@ -67,7 +88,7 @@ app.post('/api/register', async (req, res) => {
   res.json({ token, user: { id: data.id, username, display_name: data.display_name } });
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   const { data: user } = await supabase.from('profiles').select('*').eq('username', username).single();
   if (!user) return res.status(400).json({ error: 'User not found' });
