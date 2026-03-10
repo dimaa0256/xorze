@@ -340,8 +340,25 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    // Small delay to avoid flicker on page refresh
+    setTimeout(async () => {
+      // Only set offline if user hasn't reconnected
+      if (!onlineUsers[userId] || onlineUsers[userId] === socket.id) {
+        delete onlineUsers[userId];
+        await supabase.from('profiles').update({ status: 'offline' }).eq('id', userId);
+        io.emit('user_status', { user_id: userId, status: 'offline' });
+      }
+    }, 3000);
+  });
+
+  // Heartbeat - если клиент не отвечает, считаем оффлайн
+  socket.on('ping_alive', () => {
+    socket.emit('pong_alive');
+  });
+
+  socket.on('going_offline', async () => {
     delete onlineUsers[userId];
-    supabase.from('profiles').update({ status: 'offline' }).eq('id', userId);
+    await supabase.from('profiles').update({ status: 'offline' }).eq('id', userId);
     io.emit('user_status', { user_id: userId, status: 'offline' });
   });
 });
@@ -373,6 +390,11 @@ app.delete('/api/admin/users/:userId', adminMiddleware, async (req, res) => {
   await supabase.from('chat_members').delete().eq('user_id', userId);
   await supabase.from('profiles').delete().eq('id', userId);
   res.json({ success: true });
+});
+
+// Cleanup stale online statuses on startup
+supabase.from('profiles').update({ status: 'offline' }).neq('id', '00000000-0000-0000-0000-000000000000').then(() => {
+  console.log('Cleared stale online statuses');
 });
 
 server.listen(PORT, () => console.log(`XORZE running on port ${PORT}`));
