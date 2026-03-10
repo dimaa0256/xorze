@@ -30,7 +30,6 @@ const apiLimiter = rateLimit({
   max: 200,
   message: { error: 'Слишком много запросов. Подождите.' },
 });
-app.use('/api/', apiLimiter);
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
@@ -40,6 +39,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'xorze_secret_key_2024';
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
+app.use('/api/', apiLimiter);
 
 const ADMIN_USERNAME = 'дима';
 const adminMiddleware = async (req, res, next) => {
