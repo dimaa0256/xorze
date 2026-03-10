@@ -299,9 +299,11 @@ io.on('connection', (socket) => {
   socket.on('stop_typing', ({ chatId }) => socket.to(chatId).emit('stop_typing', { user_id: userId, chatId }));
 
   // WebRTC signaling
-  socket.on('call_offer', ({ to, offer, chatId }) => {
+  socket.on('call_offer', async ({ to, offer, chatId, callType }) => {
+    const { data: fromUser } = await supabase.from('profiles')
+      .select('username, display_name, avatar_url').eq('id', userId).single();
     const targetSocket = onlineUsers[to];
-    if (targetSocket) io.to(targetSocket).emit('call_offer', { from: userId, offer, chatId });
+    if (targetSocket) io.to(targetSocket).emit('call_offer', { from: userId, offer, chatId, callType, fromUser });
   });
   socket.on('call_answer', ({ to, answer }) => {
     const targetSocket = onlineUsers[to];

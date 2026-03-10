@@ -147,21 +147,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .attach-menu-item .attach-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 
 /* CALL OVERLAY */
-#callOverlay{display:none;position:fixed;inset:0;background:rgba(10,11,15,0.95);z-index:200;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+#callOverlay{display:none;position:fixed;inset:0;background:#0d0f14;z-index:200;flex-direction:column;align-items:center;}
 #callOverlay.active{display:flex;}
-.call-av{width:90px;height:90px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:28px;color:#fff;overflow:hidden;}
+.call-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 30%,#1a1f2e,#0a0b0f);z-index:0;}
+.call-content{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;flex:1;justify-content:center;gap:16px;}
+.call-av{width:120px;height:120px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:38px;color:#fff;overflow:hidden;box-shadow:0 0 0 8px rgba(88,101,242,0.15),0 0 0 16px rgba(88,101,242,0.07);}
 .call-av img{width:100%;height:100%;object-fit:cover;}
-.call-name{font-family:'Syne',sans-serif;font-weight:700;font-size:22px;}
-.call-status{color:var(--muted);font-size:14px;}
-.call-actions{display:flex;gap:16px;margin-top:16px;}
-.call-btn{width:60px;height:60px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;transition:transform 0.15s;}
+.call-av.ringing{animation:callPulse 1.5s infinite;}
+@keyframes callPulse{0%,100%{box-shadow:0 0 0 8px rgba(88,101,242,0.15),0 0 0 16px rgba(88,101,242,0.07)}50%{box-shadow:0 0 0 12px rgba(88,101,242,0.2),0 0 0 24px rgba(88,101,242,0.08)}}
+.call-name{font-family:'Syne',sans-serif;font-weight:700;font-size:26px;color:#fff;}
+.call-status{color:rgba(255,255,255,0.5);font-size:13px;letter-spacing:1px;text-transform:uppercase;}
+.call-timer{color:rgba(255,255,255,0.7);font-size:15px;font-family:'Syne',sans-serif;letter-spacing:1px;}
+.call-actions{position:relative;z-index:1;display:flex;gap:20px;padding:0 20px 40px;justify-content:center;width:100%;}
+.call-action{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.call-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.15s,background 0.2s;}
 .call-btn:active{transform:scale(0.9);}
-.call-btn.end{background:var(--red);}
-.call-btn.mute{background:var(--card);}
-.call-btn.cam{background:var(--card);}
-#localVideo,#remoteVideo{border-radius:14px;background:#000;display:none;}
-#remoteVideo{width:100%;max-width:600px;max-height:400px;}
-#localVideo{width:160px;height:100px;position:fixed;bottom:140px;right:20px;z-index:201;}
+.call-btn.end{background:#e53935;}
+.call-btn.end:hover{background:#c62828;}
+.call-btn.ctrl{background:rgba(255,255,255,0.12);}
+.call-btn.ctrl:hover{background:rgba(255,255,255,0.2);}
+.call-btn.ctrl.active{background:rgba(255,255,255,0.3);}
+.call-action-label{font-size:11px;color:rgba(255,255,255,0.6);white-space:nowrap;}
+#remoteVideo{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:none;background:#000;}
+#localVideo{width:120px;height:160px;position:fixed;bottom:160px;right:16px;z-index:202;border-radius:12px;object-fit:cover;display:none;background:#000;box-shadow:0 4px 16px rgba(0,0,0,0.5);}
+.call-incoming-btns{display:flex;gap:40px;justify-content:center;}
 
 /* CONTEXT MENU */
 .ctx-menu{position:fixed;background:#1e2130;border-radius:16px;padding:0;z-index:300;display:none;min-width:220px;box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden;}
@@ -234,20 +243,41 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .back-btn{display:none;}
 @media(max-width:700px){
   .layout{position:relative;width:100vw;overflow:hidden;}
-  .sidebar{width:100vw;min-width:100vw;position:absolute;top:0;left:0;bottom:0;z-index:10;transition:transform 0.3s ease;}
+  .sidebar{
+    width:100vw;min-width:100vw;
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    z-index:10;transition:transform 0.3s ease;
+    display:flex;flex-direction:column;
+    height:100%;height:100dvh;
+  }
   .sidebar.hidden{transform:translateX(-100vw);pointer-events:none;}
+  .sidebar .chat-list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  .sidebar-footer{
+    flex-shrink:0;
+    padding-bottom:max(12px, env(safe-area-inset-bottom));
+  }
   .main{width:100vw;}
-  #chatView{position:fixed;top:0;left:0;right:0;bottom:0;z-index:20;background:var(--bg);transform:translateX(100vw);transition:transform 0.3s ease;display:flex;flex-direction:column;height:100dvh;}
+  #chatView{
+    position:fixed;top:0;left:0;right:0;bottom:0;
+    z-index:20;background:var(--bg);
+    transform:translateX(100vw);
+    transition:transform 0.3s ease;
+    display:flex;flex-direction:column;
+    height:100%;height:100dvh;
+  }
   #chatView.open{transform:translateX(0)!important;display:flex!important;}
+  #chatView .msgs{flex:1;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;}
+  #chatView .input-area{
+    flex-shrink:0;
+    padding-bottom:max(8px, env(safe-area-inset-bottom));
+  }
   .back-btn{display:flex!important;}
   .msg-group{max-width:80%;}
   .auth-box{width:94vw;padding:20px 16px;}
   .msgs{padding:12px 10px;}
   .input-area{padding:8px 10px;gap:6px;}
-  .chat-header{padding:10px 12px;}
+  .chat-header{padding:10px 12px;flex-shrink:0;}
   .empty-main{display:none!important;}
-  #chatView .msgs{flex:1;overflow-y:auto;min-height:0;}
-  #chatView .input-area{flex-shrink:0;}
   .modal-sheet{max-width:100%;}
 }
 </style>
@@ -388,15 +418,65 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 <!-- CALL OVERLAY -->
 <div id="callOverlay">
-  <div class="call-av" id="callAv"></div>
-  <div class="call-name" id="callName"></div>
-  <div class="call-status" id="callStatus">Звонок...</div>
+  <div class="call-bg"></div>
   <video id="remoteVideo" autoplay playsinline></video>
   <video id="localVideo" autoplay playsinline muted></video>
-  <div class="call-actions">
-    <button class="call-btn mute" onclick="toggleMute()" id="muteBtn">🎤</button>
-    <button class="call-btn cam" onclick="toggleCam()" id="camBtn">📷</button>
-    <button class="call-btn end" onclick="endCall()">📵</button>
+  <div class="call-content">
+    <div class="call-av" id="callAv"></div>
+    <div class="call-name" id="callName"></div>
+    <div class="call-status" id="callStatus">Вызов...</div>
+    <div class="call-timer" id="callTimer" style="display:none">00:00</div>
+  </div>
+  <!-- Active call buttons -->
+  <div class="call-actions" id="callActiveActions" style="display:none">
+    <div class="call-action">
+      <button class="call-btn ctrl" id="muteBtn" onclick="toggleMute()">
+        <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+      </button>
+      <span class="call-action-label">Выкл. звук</span>
+    </div>
+    <div class="call-action">
+      <button class="call-btn ctrl" id="camBtn" onclick="toggleCam()">
+        <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      </button>
+      <span class="call-action-label">Вкл. видео</span>
+    </div>
+    <div class="call-action">
+      <button class="call-btn end" onclick="endCall()">
+        <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+      </button>
+      <span class="call-action-label">Завершить</span>
+    </div>
+  </div>
+  <!-- Outgoing call buttons (ringing) -->
+  <div class="call-actions" id="callOutgoingActions">
+    <div class="call-action">
+      <button class="call-btn ctrl" id="outCamBtn" onclick="toggleOutCam()">
+        <svg width="24" height="24" fill="none" stroke="white" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+      </button>
+      <span class="call-action-label">Вкл. видео</span>
+    </div>
+    <div class="call-action">
+      <button class="call-btn end" onclick="endCall()">
+        <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+      </button>
+      <span class="call-action-label">Отменить</span>
+    </div>
+  </div>
+  <!-- Incoming call buttons -->
+  <div class="call-actions" id="callIncomingActions" style="display:none">
+    <div class="call-action">
+      <button class="call-btn end" onclick="rejectCall()">
+        <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+      </button>
+      <span class="call-action-label">Отклонить</span>
+    </div>
+    <div class="call-action">
+      <button class="call-btn ctrl" onclick="acceptCall()" style="background:#23d18b">
+        <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+      </button>
+      <span class="call-action-label">Принять</span>
+    </div>
   </div>
 </div>
 
@@ -794,8 +874,15 @@ function connectSocket(){
   });
   socket.on('reactions_updated',({message_id,reactions})=>updateReactions(message_id,reactions));
   socket.on('call_offer',handleCallOffer);
-  socket.on('call_answer',async({answer})=>{if(peerConnection)await peerConnection.setRemoteDescription(answer);document.getElementById('callStatus').textContent='Разговор';});
-  socket.on('ice_candidate',async({candidate})=>{if(peerConnection)await peerConnection.addIceCandidate(candidate);});
+  socket.on('call_answer',async({answer})=>{
+    if(peerConnection){
+      await peerConnection.setRemoteDescription(answer);
+      startCallTimer();
+    }
+  });
+  socket.on('ice_candidate',async({candidate})=>{
+    if(peerConnection){try{await peerConnection.addIceCandidate(candidate);}catch(e){}}
+  });
   socket.on('call_end',()=>endCall());
   socket.on('message_deleted',({message_id})=>{
     const row=document.querySelector(`[data-msg-id="${message_id}"]`);
@@ -1375,56 +1462,158 @@ async function uploadAvatar(input){
 }
 
 // CALLS
+let muted=false,camOff=false,callTimer=null,callSeconds=0,pendingOffer=null;
+
+const ICE_SERVERS={iceServers:[
+  {urls:'stun:stun.l.google.com:19302'},
+  {urls:'stun:stun1.l.google.com:19302'},
+  {urls:'stun:stun2.l.google.com:19302'},
+  {urls:'stun:stun.relay.metered.ca:80'},
+  {urls:'turn:global.relay.metered.ca:80',username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'turn:global.relay.metered.ca:443',username:'openrelayproject',credential:'openrelayproject'},
+]};
+
+function createPC(){
+  const pc=new RTCPeerConnection(ICE_SERVERS);
+  pc.onicecandidate=e=>{if(e.candidate&&callPeerId)socket.emit('ice_candidate',{to:callPeerId,candidate:e.candidate});};
+  pc.ontrack=e=>{
+    const rv=document.getElementById('remoteVideo');
+    rv.srcObject=e.streams[0];
+    rv.style.display='block';
+    // Show video track means video call connected
+    if(e.track.kind==='video'){
+      document.querySelector('.call-bg').style.display='none';
+      document.querySelector('.call-content').style.opacity='0.85';
+      document.querySelector('.call-content').style.position='absolute';
+      document.querySelector('.call-content').style.bottom='140px';
+      document.querySelector('.call-content').style.top='auto';
+    }
+  };
+  pc.onconnectionstatechange=()=>{
+    if(pc.connectionState==='connected') startCallTimer();
+    if(pc.connectionState==='disconnected'||pc.connectionState==='failed') endCall();
+  };
+  return pc;
+}
+
 async function startCall(type){
   if(!currentChat||!currentChat._otherUserId)return;
-  callType=type;callPeerId=currentChat._otherUserId;
+  callType=type; callPeerId=currentChat._otherUserId;
   const other=currentChat._otherUser;
-  showCallOverlay(other?.display_name||other?.username||'?',other?.avatar_url,false);
-  localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:type==='video'});
+  showCallOverlay(other?.display_name||other?.username||'?', other?.avatar_url, 'outgoing');
+  try {
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true, video:type==='video'});
+  } catch(e){
+    alert('Нет доступа к микрофону/камере'); hideCallOverlay(); return;
+  }
   if(type==='video'){const lv=document.getElementById('localVideo');lv.srcObject=localStream;lv.style.display='block';}
   peerConnection=createPC();
   localStream.getTracks().forEach(t=>peerConnection.addTrack(t,localStream));
   const offer=await peerConnection.createOffer();
   await peerConnection.setLocalDescription(offer);
-  socket.emit('call_offer',{to:callPeerId,offer,chatId:currentChat.id});
+  socket.emit('call_offer',{to:callPeerId,offer,chatId:currentChat.id,callType:type});
 }
-async function handleCallOffer({from,offer}){
-  callPeerId=from;
-  showCallOverlay('Входящий звонок',null,true);
-  localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+
+async function handleCallOffer({from,offer,callType:type,fromUser}){
+  callPeerId=from; pendingOffer=offer; callType=type||'audio';
+  const name=fromUser?.display_name||fromUser?.username||'Входящий звонок';
+  const av=fromUser?.avatar_url;
+  showCallOverlay(name, av, 'incoming');
+}
+
+async function acceptCall(){
+  if(!pendingOffer||!callPeerId)return;
+  document.getElementById('callIncomingActions').style.display='none';
+  document.getElementById('callActiveActions').style.display='flex';
+  document.getElementById('callStatus').textContent='Соединение...';
+  try {
+    localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:callType==='video'});
+  } catch(e){ alert('Нет доступа к микрофону'); endCall(); return; }
+  if(callType==='video'){const lv=document.getElementById('localVideo');lv.srcObject=localStream;lv.style.display='block';}
   peerConnection=createPC();
   localStream.getTracks().forEach(t=>peerConnection.addTrack(t,localStream));
-  await peerConnection.setRemoteDescription(offer);
+  await peerConnection.setRemoteDescription(pendingOffer);
   const answer=await peerConnection.createAnswer();
   await peerConnection.setLocalDescription(answer);
-  socket.emit('call_answer',{to:from,answer});
-  document.getElementById('callStatus').textContent='Разговор';
+  socket.emit('call_answer',{to:callPeerId,answer});
+  pendingOffer=null;
 }
-function createPC(){
-  const pc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
-  pc.onicecandidate=e=>{if(e.candidate)socket.emit('ice_candidate',{to:callPeerId,candidate:e.candidate});};
-  pc.ontrack=e=>{const rv=document.getElementById('remoteVideo');rv.srcObject=e.streams[0];rv.style.display='block';};
-  return pc;
+
+function rejectCall(){
+  if(socket&&callPeerId)socket.emit('call_end',{to:callPeerId});
+  hideCallOverlay();
 }
-function showCallOverlay(name,avatarUrl,incoming){
-  document.getElementById('callOverlay').classList.add('active');
+
+function showCallOverlay(name, avatarUrl, mode){
   const av=document.getElementById('callAv');
-  if(avatarUrl)av.innerHTML=`<img src="${avatarUrl}">`;
-  else av.textContent=initials(name);
+  if(avatarUrl){av.innerHTML=`<img src="${avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;av.classList.remove('ringing');}
+  else{av.textContent=initials(name);av.classList.add('ringing');}
   document.getElementById('callName').textContent=name;
-  document.getElementById('callStatus').textContent=incoming?'Входящий звонок...':'Вызов...';
+  document.getElementById('callTimer').style.display='none';
+  if(mode==='incoming'){
+    document.getElementById('callStatus').textContent='Входящий звонок...';
+    document.getElementById('callOutgoingActions').style.display='none';
+    document.getElementById('callActiveActions').style.display='none';
+    document.getElementById('callIncomingActions').style.display='flex';
+  } else {
+    document.getElementById('callStatus').textContent='Вызов...';
+    document.getElementById('callOutgoingActions').style.display='flex';
+    document.getElementById('callActiveActions').style.display='none';
+    document.getElementById('callIncomingActions').style.display='none';
+  }
+  document.getElementById('callOverlay').classList.add('active');
 }
+
+function hideCallOverlay(){
+  document.getElementById('callOverlay').classList.remove('active');
+  stopCallTimer();
+  ['localVideo','remoteVideo'].forEach(id=>{const v=document.getElementById(id);if(v){v.srcObject=null;v.style.display='none';}});
+  // Reset video layout
+  const bg=document.querySelector('.call-bg');if(bg)bg.style.display='';
+  const cc=document.querySelector('.call-content');if(cc){cc.style.opacity='';cc.style.position='';cc.style.bottom='';cc.style.top='';}
+}
+
 function endCall(){
   if(socket&&callPeerId)socket.emit('call_end',{to:callPeerId});
   if(peerConnection){peerConnection.close();peerConnection=null;}
-  if(localStream)localStream.getTracks().forEach(t=>t.stop());
-  localStream=null;callPeerId=null;
-  document.getElementById('callOverlay').classList.remove('active');
-  ['localVideo','remoteVideo'].forEach(id=>{const v=document.getElementById(id);v.srcObject=null;v.style.display='none';});
+  if(localStream){localStream.getTracks().forEach(t=>t.stop());localStream=null;}
+  callPeerId=null; pendingOffer=null; muted=false; camOff=false;
+  hideCallOverlay();
 }
-let muted=false,camOff=false;
-function toggleMute(){if(!localStream)return;muted=!muted;localStream.getAudioTracks().forEach(t=>t.enabled=!muted);document.getElementById('muteBtn').textContent=muted?'🔇':'🎤';}
-function toggleCam(){if(!localStream)return;camOff=!camOff;localStream.getVideoTracks().forEach(t=>t.enabled=!camOff);document.getElementById('camBtn').textContent=camOff?'🚫':'📷';}
+
+function startCallTimer(){
+  callSeconds=0; stopCallTimer();
+  document.getElementById('callStatus').style.display='none';
+  document.getElementById('callTimer').style.display='block';
+  document.getElementById('callOutgoingActions').style.display='none';
+  document.getElementById('callActiveActions').style.display='flex';
+  callTimer=setInterval(()=>{
+    callSeconds++;
+    const m=String(Math.floor(callSeconds/60)).padStart(2,'0');
+    const s=String(callSeconds%60).padStart(2,'0');
+    document.getElementById('callTimer').textContent=`${m}:${s}`;
+  },1000);
+}
+function stopCallTimer(){clearInterval(callTimer);callTimer=null;document.getElementById('callStatus').style.display='';}
+
+function toggleMute(){
+  if(!localStream)return; muted=!muted;
+  localStream.getAudioTracks().forEach(t=>t.enabled=!muted);
+  const btn=document.getElementById('muteBtn');
+  btn.style.background=muted?'rgba(255,255,255,0.3)':'rgba(255,255,255,0.12)';
+  btn.querySelector('svg').style.opacity=muted?'0.4':'1';
+  btn.nextElementSibling.textContent=muted?'Включить звук':'Выкл. звук';
+}
+function toggleCam(){
+  if(!localStream)return; camOff=!camOff;
+  localStream.getVideoTracks().forEach(t=>t.enabled=!camOff);
+  const btn=document.getElementById('camBtn');
+  btn.style.background=camOff?'rgba(255,255,255,0.3)':'rgba(255,255,255,0.12)';
+  btn.nextElementSibling.textContent=camOff?'Выкл. видео':'Вкл. видео';
+}
+function toggleOutCam(){
+  if(localStream){camOff=!camOff;localStream.getVideoTracks().forEach(t=>t.enabled=!camOff);}
+}
 </script>
 <!-- DELETE ACCOUNT MODAL -->
 <div class="modal-overlay center" id="deleteAccountModal" onclick="if(event.target===this)closeDeleteAccount()">
