@@ -20,6 +20,19 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
+const ADMIN_USERNAME = 'дима1';
+const adminMiddleware = async (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ error: 'No token' });
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const { data: user } = await supabase.from('profiles').select('username').eq('id', decoded.id).single();
+    if (!user || user.username !== ADMIN_USERNAME) return res.status(403).json({ error: 'Not admin' });
+    req.user = decoded;
+    next();
+  } catch { res.status(401).json({ error: 'Invalid token' }); }
+};
+
 const storage = multer.memoryStorage();
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
@@ -180,7 +193,16 @@ app.post('/api/upload', authMiddleware, upload.single('file'), async (req, res) 
 // ========== UPDATE PROFILE ==========
 
 app.patch('/api/users/me', authMiddleware, async (req, res) => {
-  const { display_name, avatar_url, phone, birthday } = req.body;
+  const { display_name, avatar_url, phone, birthday, current_password, new_password } = req.body;
+  // Handle password change
+  if (new_password) {
+    const { data: user } = await supabase.from('profiles').select('password_hash').eq('id', req.user.id).single();
+    const valid = await bcrypt.compare(current_password || '', user.password_hash);
+    if (!valid) return res.status(400).json({ error: 'Неверный текущий пароль' });
+    const hash = await bcrypt.hash(new_password, 10);
+    await supabase.from('profiles').update({ password_hash: hash }).eq('id', req.user.id);
+    return res.json({ success: true });
+  }
   const updates = {};
   if (display_name) updates.display_name = display_name;
   if (avatar_url) updates.avatar_url = avatar_url;
@@ -305,4 +327,29 @@ io.on('connection', (socket) => {
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../public/index.html')));
 
 const PORT = process.env.PORT || 3000;
+// ========== ADMIN ==========
+
+app.get('/api/admin/users', adminMiddleware, async (req, res) => {
+  const { data, error } = await supabase.from('profiles')
+    .select('id, username, display_name, avatar_url, status, phone, birthday, created_at')
+    .order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+app.get('/api/admin/stats', adminMiddleware, async (req, res) => {
+  const { count: messages } = await supabase.from('messages').select('*', { count: 'exact', head: true });
+  const { count: chats } = await supabase.from('chats').select('*', { count: 'exact', head: true });
+  res.json({ messages, chats });
+});
+
+app.delete('/api/admin/users/:userId', adminMiddleware, async (req, res) => {
+  const { userId } = req.params;
+  await supabase.from('reactions').delete().eq('user_id', userId);
+  await supabase.from('messages').delete().eq('sender_id', userId);
+  await supabase.from('chat_members').delete().eq('user_id', userId);
+  await supabase.from('profiles').delete().eq('id', userId);
+  res.json({ success: true });
+});
+
 server.listen(PORT, () => console.log(`XORZE running on port ${PORT}`));

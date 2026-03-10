@@ -55,10 +55,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .chat-item:hover{background:var(--hover);}
 .chat-item.active{background:var(--hover);}
 .chat-item.active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:3px;background:var(--accent);border-radius:0 3px 3px 0;}
-.av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;flex-shrink:0;position:relative;background:var(--accent);color:#fff;overflow:hidden;}
+.av{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;flex-shrink:0;position:relative;background:var(--accent);color:#fff;overflow:visible;}
 .av.sm{width:36px;height:36px;font-size:12px;}
-.av img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
-.dot{position:absolute;bottom:1px;right:1px;width:10px;height:10px;border-radius:50%;border:2px solid var(--sidebar);}
+.av img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;}
+.dot{position:absolute;bottom:-1px;right:-1px;width:11px;height:11px;border-radius:50%;border:2px solid var(--sidebar);z-index:2;}
 .dot.online{background:var(--green);}
 .dot.offline{background:var(--muted);}
 .chat-info{flex:1;min-width:0;}
@@ -99,7 +99,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .msg-bubble{padding:9px 13px;border-radius:18px;font-size:14px;line-height:1.5;word-break:break-word;white-space:normal;overflow-wrap:break-word;}
 .msg-row.them .msg-bubble{background:var(--bubble-them);border-bottom-left-radius:4px;}
 .msg-row.me .msg-bubble{background:var(--bubble-me);border-bottom-right-radius:4px;color:#fff;}
-.msg-time{font-size:10px;color:var(--muted);padding:0 4px;margin-top:2px;}
+.msg-time{font-size:10px;color:var(--muted);padding:0 4px;margin-top:2px;display:flex;align-items:center;gap:3px;}
+.msg-time.me{justify-content:flex-end;}
+.read-tick{display:inline-flex;align-items:center;}
+.read-tick.read svg{color:#5865f2;}
+.read-tick.sent svg{color:var(--muted);}
 .msg-img{max-width:260px;max-height:220px;border-radius:12px;cursor:pointer;display:block;object-fit:cover;}
 .msg-file{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.05);border-radius:12px;text-decoration:none;color:var(--text);}
 .msg-file:hover{background:rgba(255,255,255,0.1);}
@@ -504,13 +508,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settingsModal" onclick="if(event.target===this)closeSettings()">
-  <div class="modal-sheet" style="border-radius:24px 24px 0 0;max-height:90vh;overflow-y:auto;">
+  <div class="modal-sheet" style="border-radius:24px 24px 0 0;max-height:92vh;overflow-y:auto;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px">
       <div style="font-family:Syne,sans-serif;font-weight:700;font-size:18px">Настройки</div>
       <button class="icon-btn" onclick="closeSettings()">✕</button>
     </div>
-
-    <!-- Profile header -->
     <div class="settings-header" onclick="openEditProfile()">
       <div class="settings-av" id="settingsAv"></div>
       <div style="flex:1">
@@ -519,82 +521,99 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <svg width="16" height="16" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
     </div>
-
     <div class="settings-divider"></div>
 
+    <!-- АККАУНТ -->
     <div class="settings-section">
       <div class="settings-item" onclick="openEditProfile()">
-        <div class="settings-item-icon" style="background:#5865f222">
-          <svg width="18" height="18" fill="none" stroke="#5865f2" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
+        <div class="settings-item-icon" style="background:#5865f222"><svg width="18" height="18" fill="none" stroke="#5865f2" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
         <div class="settings-item-text">
           <div class="settings-item-title">Мой аккаунт</div>
-          <div class="settings-item-sub">Имя, фото профиля</div>
+          <div class="settings-item-sub" id="settingsAccountSub">Имя, фото профиля</div>
         </div>
         <svg width="14" height="14" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
-      <div class="settings-item">
-        <div class="settings-item-icon" style="background:#43b58122">
-          <svg width="18" height="18" fill="none" stroke="#43b581" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        </div>
+      <div class="settings-item" onclick="openPhoneSettings()">
+        <div class="settings-item-icon" style="background:#43b58122"><svg width="18" height="18" fill="none" stroke="#43b581" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.81a16 16 0 0 0 6.29 6.29l.95-.95a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
         <div class="settings-item-text">
-          <div class="settings-item-title">Уведомления</div>
-          <div class="settings-item-sub">Звуки, вибрация</div>
+          <div class="settings-item-title">Номер телефона</div>
+          <div class="settings-item-sub" id="settingsPhoneSub">Не привязан</div>
         </div>
         <svg width="14" height="14" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
-      <div class="settings-item">
-        <div class="settings-item-icon" style="background:#e91e8c22">
-          <svg width="18" height="18" fill="none" stroke="#e91e8c" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        </div>
+      <div class="settings-item" onclick="openBirthdaySettings()">
+        <div class="settings-item-icon" style="background:#faa61a22"><svg width="18" height="18" fill="none" stroke="#faa61a" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
         <div class="settings-item-text">
-          <div class="settings-item-title">Конфиденциальность</div>
+          <div class="settings-item-title">Дата рождения</div>
+          <div class="settings-item-sub" id="settingsBdaySub">Не указана</div>
+        </div>
+        <svg width="14" height="14" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+      </div>
+      <div class="settings-item" onclick="openPasswordSettings()">
+        <div class="settings-item-icon" style="background:#e91e8c22"><svg width="18" height="18" fill="none" stroke="#e91e8c" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <div class="settings-item-text">
+          <div class="settings-item-title">Изменить пароль</div>
           <div class="settings-item-sub">Безопасность аккаунта</div>
         </div>
         <svg width="14" height="14" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
     </div>
-
     <div class="settings-divider"></div>
 
+    <!-- УВЕДОМЛЕНИЯ -->
     <div class="settings-section">
-      <div class="settings-item">
-        <div class="settings-item-icon" style="background:#faa61a22">
-          <svg width="18" height="18" fill="none" stroke="#faa61a" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        </div>
+      <div class="settings-item" onclick="toggleNotifSounds()">
+        <div class="settings-item-icon" style="background:#7289da22"><svg width="18" height="18" fill="none" stroke="#7289da" stroke-width="2" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
         <div class="settings-item-text">
-          <div class="settings-item-title">Настройки чатов</div>
-          <div class="settings-item-sub">Оформление, шрифты</div>
+          <div class="settings-item-title">Звук уведомлений</div>
+          <div class="settings-item-sub">Звук при новом сообщении</div>
+        </div>
+        <div id="notifSoundToggle" style="width:40px;height:22px;background:var(--green);border-radius:11px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0">
+          <div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;transition:transform 0.2s" id="notifSoundDot"></div>
+        </div>
+      </div>
+      <div class="settings-item" onclick="toggleNotifVibro()">
+        <div class="settings-item-icon" style="background:#1abc9c22"><svg width="18" height="18" fill="none" stroke="#1abc9c" stroke-width="2" viewBox="0 0 24 24"><line x1="8" y1="5" x2="8" y2="19"/><line x1="16" y1="5" x2="16" y2="19"/><rect x="4" y="7" width="4" height="10" rx="1"/><rect x="16" y="7" width="4" height="10" rx="1"/><rect x="8" y="3" width="8" height="18" rx="1"/></svg></div>
+        <div class="settings-item-text">
+          <div class="settings-item-title">Вибрация</div>
+          <div class="settings-item-sub">Вибрация при сообщениях</div>
+        </div>
+        <div id="notifVibroToggle" style="width:40px;height:22px;background:var(--green);border-radius:11px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0">
+          <div style="width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:2px;right:2px;transition:transform 0.2s" id="notifVibroDot"></div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-divider"></div>
+
+    <!-- ЧАТЫ -->
+    <div class="settings-section">
+      <div class="settings-item" onclick="openChatAppearance()">
+        <div class="settings-item-icon" style="background:#e67e2222"><svg width="18" height="18" fill="none" stroke="#e67e22" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+        <div class="settings-item-text">
+          <div class="settings-item-title">Оформление чата</div>
+          <div class="settings-item-sub" id="settingsBubbleSub">Цвет пузырьков</div>
         </div>
         <svg width="14" height="14" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
-      <div class="settings-item">
-        <div class="settings-item-icon" style="background:#1abc9c22">
-          <svg width="18" height="18" fill="none" stroke="#1abc9c" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-        </div>
+      <div class="settings-item" onclick="openFontSettings()">
+        <div class="settings-item-icon" style="background:#5865f222"><svg width="18" height="18" fill="none" stroke="#5865f2" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></div>
         <div class="settings-item-text">
-          <div class="settings-item-title">Звук и камера</div>
-          <div class="settings-item-sub">Настройки звонков</div>
+          <div class="settings-item-title">Размер шрифта</div>
+          <div class="settings-item-sub" id="settingsFontSub">Обычный</div>
         </div>
         <svg width="14" height="14" fill="none" stroke="var(--muted)" stroke-width="2" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
       </div>
     </div>
-
     <div class="settings-divider"></div>
 
+    <!-- ВЫХОД -->
     <div class="settings-section">
-      <div class="settings-item" onclick="logout()" style="color:var(--red)">
-        <div class="settings-item-icon" style="background:#ed424522">
-          <svg width="18" height="18" fill="none" stroke="#ed4245" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </div>
-        <div class="settings-item-text">
-          <div class="settings-item-title" style="color:var(--red)">Выйти из аккаунта</div>
-        </div>
+      <div class="settings-item" onclick="logout()">
+        <div class="settings-item-icon" style="background:#ed424522"><svg width="18" height="18" fill="none" stroke="#ed4245" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+        <div class="settings-item-text"><div class="settings-item-title" style="color:var(--red)">Выйти из аккаунта</div></div>
       </div>
       <div class="settings-item" onclick="confirmDeleteAccount()">
-        <div class="settings-item-icon" style="background:#ed424522">
-          <svg width="18" height="18" fill="none" stroke="#ed4245" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-        </div>
+        <div class="settings-item-icon" style="background:#ed424522"><svg width="18" height="18" fill="none" stroke="#ed4245" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg></div>
         <div class="settings-item-text">
           <div class="settings-item-title" style="color:var(--red)">Удалить аккаунт</div>
           <div class="settings-item-sub">Это действие нельзя отменить</div>
@@ -626,6 +645,70 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
       </div>
       <div id="editProfileMsg" style="font-size:13px;margin-bottom:10px;min-height:18px;text-align:center"></div>
       <button onclick="saveProfile()" style="width:100%;padding:12px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:15px;font-weight:600;font-family:Syne,sans-serif;cursor:pointer;">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- PHONE SETTINGS MODAL -->
+<div class="modal-overlay center" id="phoneModal" onclick="if(event.target===this)document.getElementById('phoneModal').style.display='none'">
+  <div class="modal-center-box" style="padding:24px">
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;margin-bottom:16px">Номер телефона</div>
+    <div class="form-group"><label>Номер</label><input id="phoneInput" type="tel" style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:DM Sans,sans-serif;font-size:14px;outline:none;" placeholder="+7 999 000 00 00"></div>
+    <div id="phoneMsg" style="font-size:13px;margin-bottom:10px;min-height:18px;text-align:center"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('phoneModal').style.display='none'" style="flex:1;padding:11px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;cursor:pointer;">Отмена</button>
+      <button onclick="savePhone()" style="flex:1;padding:11px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- BIRTHDAY SETTINGS MODAL -->
+<div class="modal-overlay center" id="bdayModal" onclick="if(event.target===this)document.getElementById('bdayModal').style.display='none'">
+  <div class="modal-center-box" style="padding:24px">
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;margin-bottom:16px">Дата рождения</div>
+    <div class="form-group"><label>Дата</label><input id="bdayInput" type="date" style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:DM Sans,sans-serif;font-size:14px;outline:none;color-scheme:dark"></div>
+    <div id="bdayMsg" style="font-size:13px;margin-bottom:10px;min-height:18px;text-align:center"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('bdayModal').style.display='none'" style="flex:1;padding:11px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;cursor:pointer;">Отмена</button>
+      <button onclick="saveBirthday()" style="flex:1;padding:11px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD SETTINGS MODAL -->
+<div class="modal-overlay center" id="passwordModal" onclick="if(event.target===this)document.getElementById('passwordModal').style.display='none'">
+  <div class="modal-center-box" style="padding:24px">
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;margin-bottom:16px">Изменить пароль</div>
+    <div class="form-group"><label>Текущий пароль</label><input id="pwdCurrent" type="password" style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:DM Sans,sans-serif;font-size:14px;outline:none;"></div>
+    <div class="form-group"><label>Новый пароль</label><input id="pwdNew" type="password" style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:DM Sans,sans-serif;font-size:14px;outline:none;"></div>
+    <div class="form-group"><label>Повторите новый</label><input id="pwdRepeat" type="password" style="width:100%;background:var(--input);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:DM Sans,sans-serif;font-size:14px;outline:none;"></div>
+    <div id="pwdMsg" style="font-size:13px;margin-bottom:10px;min-height:18px;text-align:center"></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('passwordModal').style.display='none'" style="flex:1;padding:11px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;cursor:pointer;">Отмена</button>
+      <button onclick="savePassword()" style="flex:1;padding:11px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT APPEARANCE MODAL -->
+<div class="modal-overlay center" id="appearanceModal" onclick="if(event.target===this)document.getElementById('appearanceModal').style.display='none'">
+  <div class="modal-center-box" style="padding:24px">
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;margin-bottom:16px">Цвет пузырьков</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px" id="colorGrid"></div>
+    <button onclick="document.getElementById('appearanceModal').style.display='none'" style="width:100%;padding:11px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;cursor:pointer;">Закрыть</button>
+  </div>
+</div>
+
+<!-- FONT SIZE MODAL -->
+<div class="modal-overlay center" id="fontModal" onclick="if(event.target===this)document.getElementById('fontModal').style.display='none'">
+  <div class="modal-center-box" style="padding:24px">
+    <div style="font-family:Syne,sans-serif;font-weight:700;font-size:17px;margin-bottom:6px">Размер шрифта</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px">Предпросмотр: <span id="fontPreview" style="font-size:14px">Привет! Как дела?</span></div>
+    <input type="range" id="fontRange" min="12" max="20" value="14" oninput="previewFont(this.value)" style="width:100%;accent-color:var(--accent);margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:20px"><span>Маленький</span><span>Большой</span></div>
+    <div style="display:flex;gap:10px">
+      <button onclick="document.getElementById('fontModal').style.display='none'" style="flex:1;padding:11px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;cursor:pointer;">Отмена</button>
+      <button onclick="saveFont()" style="flex:1;padding:11px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;">Применить</button>
     </div>
   </div>
 </div>
@@ -724,6 +807,13 @@ function connectSocket(){
     if(bubble){bubble.textContent=content;}
     if(msgDataStore[message_id])msgDataStore[message_id].content=content;
   });
+  socket.on('message_read',({message_id})=>{
+    const tick=document.getElementById('tick_'+message_id);
+    if(tick){
+      tick.classList.remove('sent');tick.classList.add('read');
+      tick.innerHTML=`<svg width="18" height="10" viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 5 4 8 9 1"/><polyline points="6 5 9 8 14 1"/></svg>`;
+    }
+  });
 }
 
 // CHATS
@@ -819,7 +909,10 @@ function appendMessage(msg,scroll=true){
     <div class="msg-group">
       <div class="msg-touch-area" oncontextmenu="showCtx(event,'${msg.id}',msgDataStore['${msg.id}'])" onclick="if(selectionMode)toggleSelectMsg('${msg.id}')">${content}</div>
       ${reactions}
-      <div class="msg-time">${timeStr(msg.created_at)}</div>
+      <div class="msg-time ${isMe?'me':''}">
+        ${timeStr(msg.created_at)}
+        ${isMe?`<span class="read-tick sent" id="tick_${msg.id}"><svg width="14" height="10" viewBox="0 0 14 10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 5 4 8 9 1"/></svg></span>`:''}
+      </div>
     </div>`;
   msgDataStore[msg.id]=msg;
   // long press for mobile
@@ -1076,22 +1169,166 @@ function openUserProfile(){
 function closeProfileModal(){document.getElementById('profileModal').style.display='none';}
 
 // SETTINGS
+// SETTINGS
+let notifSounds = localStorage.getItem('xorze_notif_sounds') !== 'false';
+let notifVibro = localStorage.getItem('xorze_notif_vibro') !== 'false';
+
 function openSettings(){
   const av=document.getElementById('settingsAv');
   setAv(av,me.display_name||me.username,me.avatar_url);
   document.getElementById('settingsNameDisplay').textContent=me.display_name||me.username;
   document.getElementById('settingsTagDisplay').textContent='@'+me.username;
+  // Update subs
+  document.getElementById('settingsPhoneSub').textContent=me.phone||'Не привязан';
+  if(me.birthday){
+    const d=new Date(me.birthday);
+    document.getElementById('settingsBdaySub').textContent=d.toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'});
+  } else {
+    document.getElementById('settingsBdaySub').textContent='Не указана';
+  }
+  // Toggle states
+  updateToggle('notifSoundToggle','notifSoundDot',notifSounds);
+  updateToggle('notifVibroToggle','notifVibroDot',notifVibro);
+  // Font sub
+  const fs=localStorage.getItem('xorze_font_size')||'14';
+  const labels={'12':'Маленький','14':'Обычный','16':'Средний','18':'Большой','20':'Очень большой'};
+  document.getElementById('settingsFontSub').textContent=labels[fs]||'Обычный';
+  // Bubble color sub
+  document.getElementById('settingsBubbleSub').textContent='Цвет пузырьков';
   document.getElementById('settingsModal').style.display='flex';
 }
 function closeSettings(){document.getElementById('settingsModal').style.display='none';}
+
+function updateToggle(toggleId, dotId, on){
+  const t=document.getElementById(toggleId);
+  const d=document.getElementById(dotId);
+  if(!t||!d)return;
+  t.style.background=on?'var(--green)':'var(--muted)';
+  d.style.transform=on?'translateX(0)':'translateX(-18px)';
+}
+function toggleNotifSounds(){
+  notifSounds=!notifSounds;
+  localStorage.setItem('xorze_notif_sounds',notifSounds);
+  updateToggle('notifSoundToggle','notifSoundDot',notifSounds);
+}
+function toggleNotifVibro(){
+  notifVibro=!notifVibro;
+  localStorage.setItem('xorze_notif_vibro',notifVibro);
+  updateToggle('notifVibroToggle','notifVibroDot',notifVibro);
+}
+
+// PHONE
+function openPhoneSettings(){
+  document.getElementById('phoneInput').value=me.phone||'';
+  document.getElementById('phoneMsg').textContent='';
+  document.getElementById('phoneModal').style.display='flex';
+}
+async function savePhone(){
+  const phone=document.getElementById('phoneInput').value.trim();
+  const r=await api('PATCH','/api/users/me',{phone});
+  if(r.error){document.getElementById('phoneMsg').style.color='var(--red)';document.getElementById('phoneMsg').textContent=r.error;return;}
+  me.phone=phone;localStorage.setItem('xorze_user',JSON.stringify(me));
+  document.getElementById('settingsPhoneSub').textContent=phone||'Не привязан';
+  document.getElementById('phoneMsg').style.color='var(--green)';
+  document.getElementById('phoneMsg').textContent='✓ Сохранено!';
+  setTimeout(()=>document.getElementById('phoneModal').style.display='none',1000);
+}
+
+// BIRTHDAY
+function openBirthdaySettings(){
+  document.getElementById('bdayInput').value=me.birthday||'';
+  document.getElementById('bdayMsg').textContent='';
+  document.getElementById('bdayModal').style.display='flex';
+}
+async function saveBirthday(){
+  const birthday=document.getElementById('bdayInput').value;
+  const r=await api('PATCH','/api/users/me',{birthday});
+  if(r.error){document.getElementById('bdayMsg').style.color='var(--red)';document.getElementById('bdayMsg').textContent=r.error;return;}
+  me.birthday=birthday;localStorage.setItem('xorze_user',JSON.stringify(me));
+  if(birthday){const d=new Date(birthday);document.getElementById('settingsBdaySub').textContent=d.toLocaleDateString('ru',{day:'numeric',month:'long',year:'numeric'});}
+  document.getElementById('bdayMsg').style.color='var(--green)';
+  document.getElementById('bdayMsg').textContent='✓ Сохранено!';
+  setTimeout(()=>document.getElementById('bdayModal').style.display='none',1000);
+}
+
+// PASSWORD
+function openPasswordSettings(){
+  document.getElementById('pwdCurrent').value='';
+  document.getElementById('pwdNew').value='';
+  document.getElementById('pwdRepeat').value='';
+  document.getElementById('pwdMsg').textContent='';
+  document.getElementById('passwordModal').style.display='flex';
+}
+async function savePassword(){
+  const current=document.getElementById('pwdCurrent').value;
+  const newPwd=document.getElementById('pwdNew').value;
+  const repeat=document.getElementById('pwdRepeat').value;
+  if(newPwd!==repeat){document.getElementById('pwdMsg').style.color='var(--red)';document.getElementById('pwdMsg').textContent='Пароли не совпадают';return;}
+  if(newPwd.length<6){document.getElementById('pwdMsg').style.color='var(--red)';document.getElementById('pwdMsg').textContent='Минимум 6 символов';return;}
+  const r=await api('PATCH','/api/users/me',{current_password:current,new_password:newPwd});
+  if(r.error){document.getElementById('pwdMsg').style.color='var(--red)';document.getElementById('pwdMsg').textContent=r.error;return;}
+  document.getElementById('pwdMsg').style.color='var(--green)';
+  document.getElementById('pwdMsg').textContent='✓ Пароль изменён!';
+  setTimeout(()=>document.getElementById('passwordModal').style.display='none',1000);
+}
+
+// CHAT APPEARANCE
+const BUBBLE_COLORS=[
+  {name:'Фиолетовый',color:'#5865f2'},{name:'Синий',color:'#1976d2'},
+  {name:'Зелёный',color:'#43b581'},{name:'Розовый',color:'#e91e8c'},
+  {name:'Красный',color:'#f04747'},{name:'Оранжевый',color:'#e67e22'},
+  {name:'Бирюза',color:'#1abc9c'},{name:'Тёмный',color:'#2c2f3b'},
+];
+function openChatAppearance(){
+  const current=localStorage.getItem('xorze_bubble_color')||'#5865f2';
+  document.getElementById('colorGrid').innerHTML=BUBBLE_COLORS.map(c=>`
+    <div onclick="setBubbleColor('${c.color}')" style="display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;padding:8px;border-radius:10px;${current===c.color?'background:var(--card)':''}" id="cc_${c.color.replace('#','')}">
+      <div style="width:40px;height:40px;border-radius:50%;background:${c.color};border:3px solid ${current===c.color?'#fff':'transparent'}"></div>
+      <div style="font-size:11px;color:var(--muted)">${c.name}</div>
+    </div>`).join('');
+  document.getElementById('appearanceModal').style.display='flex';
+}
+function setBubbleColor(color){
+  localStorage.setItem('xorze_bubble_color',color);
+  document.documentElement.style.setProperty('--bubble-me',color);
+  document.getElementById('appearanceModal').style.display='none';
+}
+
+// FONT SIZE
+function openFontSettings(){
+  const fs=parseInt(localStorage.getItem('xorze_font_size')||'14');
+  document.getElementById('fontRange').value=fs;
+  document.getElementById('fontPreview').style.fontSize=fs+'px';
+  document.getElementById('fontModal').style.display='flex';
+}
+function previewFont(val){
+  document.getElementById('fontPreview').style.fontSize=val+'px';
+}
+function saveFont(){
+  const val=document.getElementById('fontRange').value;
+  localStorage.setItem('xorze_font_size',val);
+  document.querySelectorAll('.msg-bubble').forEach(b=>b.style.fontSize=val+'px');
+  const labels={'12':'Маленький','14':'Обычный','16':'Средний','18':'Большой','20':'Очень большой'};
+  document.getElementById('settingsFontSub').textContent=labels[val]||'Обычный';
+  document.getElementById('fontModal').style.display='none';
+}
+
+// CONFIRM DELETE ACCOUNT
 function confirmDeleteAccount(){closeSettings();document.getElementById('deleteAccountModal').style.display='flex';}
 function closeDeleteAccount(){document.getElementById('deleteAccountModal').style.display='none';}
 async function deleteAccount(){
   closeDeleteAccount();
   await api('DELETE','/api/users/me');
-  localStorage.clear();
-  location.reload();
+  localStorage.clear();location.reload();
 }
+
+// Apply saved settings on load
+(function applyStoredSettings(){
+  const bc=localStorage.getItem('xorze_bubble_color');
+  if(bc)document.documentElement.style.setProperty('--bubble-me',bc);
+  const fs=localStorage.getItem('xorze_font_size');
+  if(fs){const style=document.createElement('style');style.textContent=`.msg-bubble{font-size:${fs}px!important}`;document.head.appendChild(style);}
+})();
 
 // EDIT PROFILE
 function openEditProfile(){
