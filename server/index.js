@@ -191,6 +191,17 @@ app.patch('/api/users/me', authMiddleware, async (req, res) => {
   res.json(data);
 });
 
+// ========== DELETE ACCOUNT ==========
+
+app.delete('/api/users/me', authMiddleware, async (req, res) => {
+  const userId = req.user.id;
+  await supabase.from('reactions').delete().eq('user_id', userId);
+  await supabase.from('messages').delete().eq('sender_id', userId);
+  await supabase.from('chat_members').delete().eq('user_id', userId);
+  await supabase.from('profiles').delete().eq('id', userId);
+  res.json({ success: true });
+});
+
 // ========== EDIT MESSAGE ==========
 
 app.patch('/api/messages/:msgId', authMiddleware, async (req, res) => {
