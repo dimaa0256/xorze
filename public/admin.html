@@ -116,12 +116,24 @@ let adminToken = localStorage.getItem('xorze_admin_token');
 let adminUser = JSON.parse(localStorage.getItem('xorze_admin_user') || 'null');
 
 async function api(method, path, body) {
-  const r = await fetch(path, {
-    method,
-    headers: {'Content-Type':'application/json', ...(adminToken?{'Authorization':'Bearer '+adminToken}:{})},
-    body: body ? JSON.stringify(body) : undefined
-  });
-  return r.json();
+  try {
+    const r = await fetch(path, {
+      method,
+      headers: {
+        'Content-Type':'application/json',
+        ...(adminToken ? {'Authorization':'Bearer '+adminToken} : {})
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({error: r.statusText}));
+      return err;
+    }
+    return r.json();
+  } catch(e) {
+    console.error('API error:', e);
+    return { error: e.message };
+  }
 }
 
 async function adminLogin() {
@@ -155,21 +167,25 @@ function showAdmin() {
 }
 
 async function loadStats() {
-  const users = await api('GET', '/api/admin/users');
-  if (!Array.isArray(users)) return;
-  document.getElementById('statUsers').textContent = users.length;
-  document.getElementById('statOnline').textContent = users.filter(u => u.status === 'online').length;
   const msgs = await api('GET', '/api/admin/stats');
-  if (msgs) {
-    document.getElementById('statMessages').textContent = msgs.messages || '—';
-    document.getElementById('statChats').textContent = msgs.chats || '—';
+  if (msgs && !msgs.error) {
+    document.getElementById('statMessages').textContent = msgs.messages ?? '—';
+    document.getElementById('statChats').textContent = msgs.chats ?? '—';
   }
 }
 
 async function loadUsers() {
-  const users = await api('GET', '/api/admin/users');
   const tbody = document.getElementById('usersTable');
-  if (!Array.isArray(users) || !users.length) {
+  tbody.innerHTML = '<tr><td colspan="6" class="empty">Загрузка...</td></tr>';
+  const users = await api('GET', '/api/admin/users');
+  if (!Array.isArray(users)) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty">Ошибка: ${users?.error || 'Нет доступа'}</td></tr>`;
+    if (users?.error === 'Not admin' || users?.error === 'Invalid token') {
+      adminLogout(); return;
+    }
+    return;
+  }
+  if (!users.length) {
     tbody.innerHTML = '<tr><td colspan="6" class="empty">Нет пользователей</td></tr>';
     return;
   }
