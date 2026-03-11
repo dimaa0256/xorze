@@ -941,7 +941,7 @@ function connectSocket(){
   });
   function applyUserStatus(user_id,status){
     if(currentChat){const o=currentChat.members?.find(m=>m.user_id===user_id);if(o){o.profiles.status=status;updateChatStatus(status);}}
-  });
+  }
   socket.on('reactions_updated',({message_id,reactions})=>updateReactions(message_id,reactions));
   socket.on('call_offer',handleCallOffer);
   socket.on('call_answer',async({answer})=>{
@@ -987,7 +987,7 @@ function renderChatList(chats){
     const status=other?.profiles?.status||'offline';
     const color=getColor(name);
     const avatarUrl=other?.profiles?.avatar_url;
-    const avHtml=avatarUrl?`<img src="${avatarUrl}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;" onerror="this.parentNode.innerHTML='<span>${initials(name)}</span>';this.parentNode.style.background='${color}'">`:`<span>${initials(name)}</span>`;
+    const avHtml=avatarUrl?`<img src="${avatarUrl}" style="width:42px;height:42px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">`:`<span>${initials(name)}</span>`;
     const last=c.last_message;
     const preview=last?(last.file_url?'📎 Файл':(last.content||'')):'Нет сообщений';
     const t=last?timeStr(last.created_at):'';
@@ -1057,7 +1057,7 @@ function appendMessage(msg,scroll=true){
     else content=`<a href="${msg.file_url}" target="_blank" class="msg-file"><svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>${msg.file_url.split('/').pop()}</a>`;
   }else{content=`<div class="msg-bubble">${escHtml(msg.content||'')}</div>`;}
   const reactions=buildReactionsHTML(msg.id,msg.reactions||[]);
-  const avHtml=avatarUrl?`<img src="${avatarUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.parentNode.innerHTML='${initials(name)}';this.parentNode.style.background='${color}'">`:`${initials(name)}`;
+  const avHtml=avatarUrl?`<img src="${avatarUrl}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;" onerror="this.style.display='none'">`:`${initials(name)}`;
   const row=document.createElement('div');
   row.className=`msg-row ${isMe?'me':'them'}`;
   row.dataset.msgId=msg.id;
