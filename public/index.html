@@ -173,17 +173,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
 .call-incoming-btns{display:flex;gap:40px;justify-content:center;}
 
 /* CONTEXT MENU */
-.ctx-menu{position:fixed;background:#1e2130;border-radius:16px;padding:0;z-index:300;display:none;min-width:220px;box-shadow:0 12px 40px rgba(0,0,0,0.6);overflow:hidden;}
-.ctx-reactions{display:flex;align-items:center;gap:2px;padding:8px 10px;border-bottom:1px solid var(--border);background:#252836;}
-.ctx-reaction-btn{width:38px;height:38px;border-radius:50%;border:none;background:none;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
-.ctx-reaction-btn:hover{background:var(--hover);}
-.ctx-reaction-more{width:34px;height:34px;border-radius:50%;border:none;background:var(--border);color:var(--text);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.ctx-items{padding:4px;}
-.ctx-item{padding:11px 14px;border-radius:10px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:12px;transition:background 0.15s;color:var(--text);}
-.ctx-item:hover{background:rgba(255,255,255,0.06);}
-.ctx-item.danger{color:var(--red);}
-.ctx-item svg{flex-shrink:0;opacity:0.7;}
-.ctx-divider{height:1px;background:var(--border);margin:3px 0;}
+.ctx-menu{position:fixed;background:#1c1f2e;border-radius:16px;padding:0;z-index:300;display:none;min-width:200px;box-shadow:0 16px 48px rgba(0,0,0,0.7);overflow:hidden;}
+.ctx-reactions{display:flex;align-items:center;justify-content:space-around;padding:10px 12px 8px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.ctx-reaction-btn{width:36px;height:36px;border-radius:50%;border:none;background:none;font-size:24px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.15s;}
+.ctx-reaction-btn:hover{transform:scale(1.3);}
+.ctx-items{padding:6px;}
+.ctx-item{padding:10px 14px;border-radius:8px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:12px;transition:background 0.1s;color:rgba(255,255,255,0.85);}
+.ctx-item:hover{background:rgba(255,255,255,0.07);}
+.ctx-item.danger{color:#e05555;}
+.ctx-item svg{flex-shrink:0;opacity:0.6;width:18px;height:18px;}
+.ctx-item.danger svg{opacity:0.8;}
+.ctx-divider{height:1px;background:rgba(255,255,255,0.06);margin:4px 6px;}
 /* SELECTION MODE */
 .msg-row.selected .msg-bubble{outline:2px solid var(--accent);outline-offset:2px;}
 .msg-row.selected{background:rgba(88,101,242,0.08);border-radius:8px;}
@@ -487,31 +487,31 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);hei
     <button class="ctx-reaction-btn" onclick="ctxQuickReact('👍')">👍</button>
     <button class="ctx-reaction-btn" onclick="ctxQuickReact('😂')">😂</button>
     <button class="ctx-reaction-btn" onclick="ctxQuickReact('😮')">😮</button>
-    <button class="ctx-reaction-btn" onclick="ctxQuickReact('😢')">😢</button>
+    <button class="ctx-reaction-btn" onclick="ctxQuickReact('😡')">😡</button>
     <button class="ctx-reaction-btn" onclick="ctxQuickReact('🔥')">🔥</button>
   </div>
   <div class="ctx-items">
     <div class="ctx-item" onclick="ctxReply()">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>Ответить
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>Ответить
     </div>
     <div class="ctx-item" onclick="ctxForward()">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>Переслать
-    </div>
-    <div class="ctx-item" onclick="ctxCopy()" id="ctxCopyBtn">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Копировать
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="15 17 20 12 15 7"/><path d="M4 18v-2a4 4 0 0 1 4-4h12"/></svg>Переслать
     </div>
     <div class="ctx-item" onclick="ctxSave()" id="ctxSaveBtn" style="display:none">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Сохранить
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Сохранить
+    </div>
+    <div class="ctx-item" onclick="ctxCopy()" id="ctxCopyBtn">
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Копировать
     </div>
     <div class="ctx-item" onclick="ctxSelect()">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Выделить
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Выделить
     </div>
     <div class="ctx-item" onclick="ctxEdit()" id="ctxEditBtn" style="display:none">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Изменить
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Изменить
     </div>
     <div class="ctx-divider"></div>
     <div class="ctx-item danger" onclick="ctxDelete()">
-      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>Удалить
+      <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Удалить
     </div>
   </div>
 </div>
@@ -1063,8 +1063,8 @@ function appendMessage(msg,scroll=true){
   row.dataset.msgId=msg.id;
   const msgDataJson=JSON.stringify(msg).replace(/'/g,"\\'").replace(/"/g,'&quot;');
   row.innerHTML=`${!isMe?`<div class="av sm" style="background:${avatarUrl?'none':color}">${avHtml}</div>`:''}
-    <div class="msg-group">
-      <div class="msg-touch-area" oncontextmenu="showCtx(event,'${msg.id}',msgDataStore['${msg.id}'])" onclick="if(selectionMode)toggleSelectMsg('${msg.id}')">${content}</div>
+    <div class="msg-group" oncontextmenu="showCtx(event,'${msg.id}',msgDataStore['${msg.id}'])" onclick="if(selectionMode)toggleSelectMsg('${msg.id}')">
+      <div class="msg-touch-area">${content}</div>
       ${reactions}
       <div class="msg-time ${isMe?'me':''}">
         ${timeStr(msg.created_at)}
